@@ -1,7 +1,7 @@
 # Don Corte Fino — Website, Online Store and Admin Portal Plan
 
 > Premium Wagyu butchery · Santa Cruz de la Sierra, Bolivia
-> Status: **planning only, no code yet**
+> Status: **planning only, no code yet** · v2: updated with the owner's answers (see §11)
 
 ---
 
@@ -12,28 +12,29 @@
 3. **An online store.** Customers fill a basket by kilo, by portion or by pack, with options (thickness, grade, how it's cut), then check out over **WhatsApp**.
 4. **An admin portal** for running the site: products, cut content, recipes, prices, **inventory in kg**, orders, delivery zones and promotions.
 
-Site language is **Spanish first**, with English as an option (see open questions).
+The site is **bilingual, Spanish and English, with a language switch** (Spanish by default, because many foreigners live in Santa Cruz). See §9.2.
 
 ---
 
 ## 1. Brand system (taken from the logo)
 
 ### 1.1 Colours
-Approximate values. We'll take the exact ones from the original logo file before building.
+Measured from the original logo file (`public/brand/logo.jpg`).
 
 | Token | Hex (approx.) | Use |
 |---|---|---|
-| `--noir` | `#0D0B0B` | Main background (the logo background) |
-| `--charcoal` | `#171314` | Cards, alternating sections |
-| `--burgundy` | `#6E1B2C` | **Main brand colour**: buttons, highlights, gradients |
-| `--burgundy-deep` | `#3F0D18` | Gradient shadows, hover states |
-| `--wine` | `#8E2A3F` | Gradient highlights, active states |
-| `--bone` | `#EADFC8` | Headlines (the "CORTE FINO" cream) |
-| `--champagne` | `#C8B188` | Tagline colour, thin divider lines, small details |
+| `--noir` | `#141413` | Darkest sections, page edges |
+| `--charcoal` | `#1D1D1C` | **Main background** (exact logo background) |
+| `--burgundy` | `#61212F` | **Main brand colour** (bull head, "DON"): buttons, highlights, gradients |
+| `--burgundy-deep` | `#4E1C28` | Gradient shadows, hover states |
+| `--wine` | `#7E2C3E` | Gradient highlights, active states (a lighter step of the burgundy) |
+| `--bone` | `#EAE3CF` | Headlines (the "CORTE FINO" cream) |
+| `--champagne` | `#D6C5A7` | Tagline beige, thin divider lines, small details |
+| `--steel` | `#CEC6B8` | Silver accents (the cleaver) |
 | `--ash` | `#8A817A` | Secondary text |
 
 **Signature gradients**
-- *Burgundy velvet:* `radial-gradient(at 30% 20%, #8E2A3F, #6E1B2C 40%, #3F0D18 100%)`
+- *Burgundy velvet:* `radial-gradient(at 30% 20%, #7E2C3E, #61212F 40%, #4E1C28 75%, #1D1D1C 100%)`
 - *Card sheen:* charcoal → burgundy-deep at 0–8% opacity, plus a moving champagne highlight on hover
 - *Gold rule:* a thin line that fades out at both ends, like the two bars beside "DON" in the logo
 
@@ -49,7 +50,7 @@ Approximate values. We'll take the exact ones from the original logo file before
 | Editorial body and quotes | **Cormorant Garamond** | Elegant serif for the education text |
 | UI, labels, prices, buttons | **Montserrat** (widely spaced capitals) | Matches "PREMIUM WAGYU BUTCHERY" |
 
-> If the font reference image you mentioned is different from the logo, send it and I'll update this table. Only the logo came through.
+> ✅ Confirmed: the fonts follow the logo. Before the build we'll compare Cinzel and Cormorant SC side by side against the logo and keep whichever matches better.
 
 ### 1.3 Voice
 Short, confident Spanish lines that match your Instagram: *"No es solo carne… es Wagyu."*, *"¿Comer o disfrutar?"*, *"Solo con Wagyu."* We reuse these as hero lines and section headings.
@@ -64,9 +65,17 @@ The folder has **13 files: 9 images and 4 videos**. Two pairs look like duplicat
 |---|---|---|
 | 4 × MP4 reels | Social video | **Hero background loop** and "process / experience" sections. We'll compress them into short, silent, looping web videos |
 | ~6 × JPG promo posts | Instagram posts with text baked in ("El amor de mamá merece algo extraordinario", "Saborea la experiencia…", "¿Comer o disfrutar? … Carne común", "No todos los churrascos…") | **Social proof / Instagram strip.** Not good as product photos because of the text on them. The "Wagyu vs. carne común" comparison is great for the education section |
-| 1 × logo JPG (68 KB) | Low resolution | We need a **vector logo (SVG/AI/PDF)** for sharp display and the animated logo reveal |
+| Logo (1024×1024, the image you sent in chat) | Sharp, saved at `public/brand/logo.jpg` | We use it as is. For the "draws itself" animation we trace the bull and cleaver into a vector outline |
 
-**Recommendation:** for a high-end store, each cut needs **clean product photos with no text** (raw cut on a dark board, plus a cooked or sliced shot). Until those exist we'll use cropped frames from your reels plus clearly labelled placeholders.
+**✅ Decision:** all product, cut, recipe and section photos will be **AI-generated** in one consistent style: realistic Wagyu × Angus beef on a **black background**. See §2.1 and `docs/IMAGE_PROMPTS.md`.
+
+### 2.1 AI image plan
+- **One look for every image:** black background, a single soft light from above left, a faint glow on the edges, slate or dark wood board, coarse salt, small touches of rosemary. Raw meat is rich red with **fine white marbling that looks realistic for Wagyu × Angus** (around BMS 4–7). Not the extreme, almost-white Japanese A5 look, because customers have to receive what they see.
+- **Shots for each cut:** (1) raw hero shot, 4:5; (2) cooked and sliced to show the pink centre, 4:5; (3) close-up of the marbling, 1:1 (used for card hover and zoom).
+- **Site images:** hero still, fire and grill, knife and board, gift box, process steps, 10–15 recipe and dish photos.
+- **Quality check before using any image:** realistic fibres and fat, no melted or warped shapes, no text, no extra bones, cut shape matches its real anatomy. Anything that fails is regenerated.
+- **Honesty:** product images carry a small "Imagen referencial" / "Reference image" note. We can swap in real photos later from the admin portal without touching code.
+- **Format:** generated at the highest resolution available, exported as AVIF/WebP, and sized automatically for each screen.
 
 ---
 
@@ -115,7 +124,10 @@ Floating on every page: **WhatsApp button** (pulses gently), **basket icon** (sh
 
 ## 5. Cut guide (education)
 
+**About the breed (✅ confirmed): Wagyu × Angus.** A section on cut pages and on `/nosotros` explains what this cross means in plain words. Wagyu brings the fine marbling and buttery feel. Angus brings deep beef flavour, size and a firmer texture. The result is consistent marbling at a better price than full-blood Wagyu. You'll review this text, and it's editable in the admin portal.
+
 ### 5.1 Starting list of cuts (you confirm these and the prices)
+> ✅ Some cuts are sold **by kg** and some **another way** (steak, pack, unit). Every product sets its own way of selling in the admin portal (§6.1), so the final mix can change at any time. We start with this list and placeholder prices, and you correct both in the admin portal.
 | Primal | Cut (ES / EN) | Notes |
 |---|---|---|
 | Rib (Costillar) | **Ojo de Bife / Ribeye**, **Tomahawk**, **Bife Ancho** | The flagship cuts |
@@ -177,7 +189,7 @@ Each product can be sold one or more of these ways:
 4. Optional **discount code**
 5. **"Confirmar por WhatsApp"**:
    - the order is **saved first** (status `nuevo`) with an order number such as `DCF-1042`
-   - then it opens `https://wa.me/59177665567?text=<the order, pre-written>`
+   - then it opens `https://wa.me/59177665567?text=<the order, pre-written>` (✅ number confirmed: **+591 776 65567**, the one on your posts. It can be changed in Settings)
    - a confirmation page appears with an "Open WhatsApp again" button, in case the app didn't open
 
 **The pre-written WhatsApp message:**
@@ -266,6 +278,7 @@ Protected login with roles: **Owner** (everything), **Staff** (orders and stock)
 | SEO | Product, Recipe and LocalBusiness structured data, Open Graph images per cut, sitemap | Show up for "wagyu santa cruz" and similar searches |
 
 ### 9.1 Data model (first draft)
+> Every customer-facing text field exists in both languages (`*_es` / `*_en`, or a `jsonb {es, en}`). The admin portal shows Spanish and English tabs for each item.
 ```
 primals         (id, slug, name, svg_path_id, order)
 cuts            (id, slug, primal_id, name_es, name_en, summary, story,
@@ -299,12 +312,21 @@ profiles        (user_id, role[owner|staff|editor])
 ```
 Access rules: the public site can only *read* published content and *create* orders. Everything else needs a staff login.
 
+### 9.2 Two languages (Spanish / English)
+- `next-intl`, with addresses like `/es/...` and `/en/...`. Spanish is the default and is used on the first visit unless the browser is set to English. The choice is remembered.
+- **ES | EN switch** in the top menu and the mobile menu. Switching keeps you on the same page (e.g. `/es/cortes/picana` ↔ `/en/cuts/picanha`).
+- Fixed interface text lives in `messages/es.json` and `messages/en.json`. Product, cut and recipe text comes from the database in both languages.
+- **The WhatsApp order message follows the customer's language**, so foreign customers write in English and your team sees it right away.
+- Search engines are told about both language versions, and the sitemap lists both.
+- Prices are always in **Bolivianos (Bs)**. English pages may show an approximate USD price next to it (optional, exchange rate set in admin).
+
 ---
 
 ## 10. Build phases
 
 | Phase | What gets built | Done when |
 |---|---|---|
+| **0. Images** | Generate and check every cut, recipe and section image (§2.1) | Approved image set in `public/media` |
 | **1. Foundations** | Project setup, brand colours and fonts, base components (buttons, cards, marbling pattern, gradients), animation base (smooth scroll, text reveals, page transitions), compressed media | A style guide page shows every component with its animations |
 | **2. Landing page** | All sections in §4 with placeholder content | Smooth, responsive landing page on a Vercel preview link |
 | **3. Cut guide** | Database setup and starter data, interactive cow map, cut list, cut detail pages, recipes | Every cut in §5.1 has a working page |
@@ -314,15 +336,22 @@ Access rules: the public site can only *read* published content and *create* ord
 
 ---
 
-## 11. What I need from you
+## 11. Decisions and open items
 
-1. **WhatsApp number:** your posts show **776 65567**. Should orders go to **+591 776 65567**?
-2. **The exact list of cuts you sell**, with **price per kg** for each grade, and which ones are sold as steaks, packs or by weight
-3. **Wagyu origin and grade** (e.g. Bolivian, Paraguayan or Australian Wagyu; full-blood or cross; BMS range), so the education content is accurate
-4. **Delivery zones and fees** in Santa Cruz, opening hours, minimum order, and whether customers can pick up in store (address?)
-5. **Payment methods** to mention (QR Simple, transfer, cash)
-6. **Logo in vector format** (SVG / AI / PDF) and the **font reference image** (only the logo came through)
-7. **Product photos without text**, or should we plan a photo shoot? The current Drive files are mostly Instagram posts with text on them
-8. **Languages:** Spanish only, or Spanish + English?
-9. **Domain** (e.g. `doncortefino.com` / `.bo`), and whether you already own one
-10. Gift boxes or bundles you already sell or want to launch
+**✅ Decided**
+| Topic | Decision |
+|---|---|
+| WhatsApp | **+591 776 65567** (the number on your posts) |
+| Images | AI-generated, realistic Wagyu on a black background (§2.1) |
+| Breed | **Wagyu × Angus**, explained on the site (§5) |
+| Ways to sell | Some cuts by kg, others by steak, pack or unit, set per product (§6.1) |
+| Logo and fonts | Use the logo you sent as is. Fonts follow the logo (§1.2) |
+| Languages | Spanish (default) + English, with a switch (§9.2) |
+| Hosting and domain | Vercel. Domain connected at launch |
+
+**⏳ Still open (none of these block the start; placeholders until then)**
+1. Final **list of cuts and prices** (and which cuts are sold by kg vs. by steak or pack). Placeholder data until then, editable in admin
+2. **Delivery zones and fees**, opening hours, minimum order, store pickup address
+3. **Payment methods** to mention (QR Simple, transfer, cash)
+4. Gift boxes or bundles to launch with
+5. **How to generate the images** (see the summary message): an image API key in the environment, or you run the prompts yourself
