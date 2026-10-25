@@ -183,7 +183,10 @@ Each product can be sold one or more of these ways:
 - Minimum order and free-delivery threshold are set in the admin portal
 
 ### 6.3 Checkout and WhatsApp handoff
-1. **Delivery or pickup**, then the zone (Equipetrol, Urubó, Norte, Centro… set in admin) with its delivery fee
+1. **Delivery or pickup.** For delivery the customer drops a pin or shares their location. The fee is **Bs 3 per km** of driving distance from the store, rounded up to the next km (e.g. 7.3 km → 8 km → **Bs 24**). Pickup is free.
+   - The store location, price per km, and an optional minimum fee or maximum distance are set in **Admin → Settings**.
+   - **Until the store location is set**, the site says "Envío calculado por WhatsApp / Delivery fee confirmed on WhatsApp", and the order still goes through.
+   - Distance comes from a routing service (Google Distance Matrix or OpenRouteService), with straight-line distance × 1.3 as a backup.
 2. **Date and time slot** (based on the opening hours set in admin)
 3. Name, phone, address, map link, delivery notes
 4. Optional **discount code**
@@ -209,9 +212,23 @@ Envío (Equipetrol): Bs XX
 🏠 Dirección / ubicación
 📝 Notas
 ```
-Payment (QR Simple, bank transfer, cash on delivery) is agreed in the chat. Later we can show your payment QR on the confirmation page.
+**Payment (✅ decided): cash or QR.** The customer picks one at checkout and the WhatsApp message includes it.
+- *Efectivo contra entrega / Cash on delivery.* The message says the final amount is confirmed after weighing.
+- *QR.* Your QR image (uploaded in Admin → Settings) shows on the confirmation page, and the message says to pay once the final total is confirmed.
+- In the admin portal each order has a payment status: `pendiente → pagado`.
 
-### 6.4 Sales funnel
+### 6.4 Launch offers (3 options, all built, you choose later)
+All three are in `data/seed/catalog.json`. Each one has an **on/off switch in Admin → Promotions**, so you can launch one, two or all three. Whichever is on gets the homepage launch banner, an announcement bar, a numbered countdown (for limited ones) and its own landing section.
+
+| | **A · Caja Inaugural / Opening Box** | **B · Club Fundadores / Founders' Club** | **C · Experiencia Degustación / Tasting Experience** |
+|---|---|---|---|
+| What it is | A limited **bundle box**: Ojo de Bife 2×3 cm (~0.9 kg), Picaña 1 kg, Entraña 0.5 kg, Burgers ×4, Chimichurri, Sea salt + black gift box and cooking guide card | A **discount code** `FUNDADOR15`: **15% off** the first order (minimum Bs 400) + **free delivery up to 10 km** + early WhatsApp access to new batches | A **tasting box**: 4 × 250 g of Ojo de Bife, Bife Angosto, Lomo and Picaña + sea salt + tasting card with QR codes to each cut's guide |
+| Price | Regular ~Bs 1,002 → **Bs 849** | –15% on the basket | Regular ~Bs 395 → **Bs 329** |
+| Limit | **50 numbered boxes**, 30 days | First **100 customers**, 30 days | No limit, can stay as a permanent entry product |
+| Purpose | Prestige, a big first order, makes a great gift | Gets many people to place a first order, builds the VIP list | Easy first try for new customers. A follow-up **10% coupon** on their favourite cut brings them back |
+| Best if… | Your audience already trusts the brand (Instagram followers) | You want as many customers as possible fast | You're mainly reaching people who have never tried Wagyu |
+
+### 6.5 Sales funnel
 - **Ways in:** Instagram/TikTok bio link → landing page · links to a specific cut (`/cortes/picana`) from posts · gift campaigns (Mother's Day, Father's Day, Christmas)
 - **Getting people to buy:** education builds trust → "Comprar" on every cut page → bundles and gift boxes → free-delivery threshold → small, tasteful notices ("Pocas unidades", "Más vendido")
 - **Getting them back:** a VIP list (WhatsApp number or email) for new batches. The admin portal shows orders that were started but not confirmed, so you can follow up yourself on WhatsApp
@@ -345,13 +362,17 @@ Access rules: the public site can only *read* published content and *create* ord
 | Images | AI-generated, realistic Wagyu on a black background (§2.1) |
 | Breed | **Wagyu × Angus**, explained on the site (§5) |
 | Ways to sell | Some cuts by kg, others by steak, pack or unit, set per product (§6.1) |
+| Catalogue | **All premium cuts with placeholder prices**: 18 cuts and prepared products + 4 add-ons, two grades (Selección BMS 4–5 / Reserva BMS 6–7, +20%), loaded from `data/seed/catalog.json` |
+| Delivery | **Bs 3 per km** from the store, rounded up. Store location set later in Admin |
+| Payment | **Cash on delivery or QR** |
+| Launch offer | **3 options built** (§6.4), switched on/off in Admin |
 | Logo and fonts | Use the logo you sent as is. Fonts follow the logo (§1.2) |
 | Languages | Spanish (default) + English, with a switch (§9.2) |
 | Hosting and domain | Vercel. Domain connected at launch |
 
 **⏳ Still open (none of these block the start; placeholders until then)**
-1. Final **list of cuts and prices** (and which cuts are sold by kg vs. by steak or pack). Placeholder data until then, editable in admin
-2. **Delivery zones and fees**, opening hours, minimum order, store pickup address
-3. **Payment methods** to mention (QR Simple, transfer, cash)
-4. Gift boxes or bundles to launch with
+1. Real prices (placeholders until then, editable in admin)
+2. **Store location** (for the per-km fee and pickup), opening hours, minimum order
+3. Your **payment QR image**
+4. Which **launch offer(s)** to switch on
 5. **How to generate the images** (see the summary message): an image API key in the environment, or you run the prompts yourself

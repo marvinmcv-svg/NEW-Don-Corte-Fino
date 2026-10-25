@@ -1,0 +1,1093 @@
+{
+  "settings": {
+    "whatsapp": "+59177665567",
+    "currency": "BOB",
+    "delivery": {
+      "mode": "distance",
+      "fee_per_km": 3,
+      "round_km": "up",
+      "min_fee": null,
+      "max_km": null,
+      "origin": null,
+      "origin_note": "Store location to be set by the owner in Admin → Settings",
+      "pickup": true
+    },
+    "payment_methods": [
+      {
+        "key": "cash",
+        "label": {
+          "es": "Efectivo contra entrega",
+          "en": "Cash on delivery"
+        }
+      },
+      {
+        "key": "qr",
+        "label": {
+          "es": "Pago por QR",
+          "en": "QR payment"
+        },
+        "qr_image": null
+      }
+    ],
+    "prices_are_placeholders": true
+  },
+  "products": [
+    {
+      "slug": "ojo-de-bife",
+      "cut": "ribeye",
+      "name": {
+        "es": "Ojo de Bife Wagyu",
+        "en": "Wagyu Ribeye"
+      },
+      "sale_type": "portion",
+      "price_unit": "kg",
+      "price_per_kg": 380,
+      "portions": [
+        {
+          "label": {
+            "es": "2 cm",
+            "en": "2 cm"
+          },
+          "thickness_cm": 2,
+          "est_kg": 0.3,
+          "est_price": 114
+        },
+        {
+          "label": {
+            "es": "3 cm",
+            "en": "3 cm"
+          },
+          "thickness_cm": 3,
+          "est_kg": 0.45,
+          "est_price": 171
+        },
+        {
+          "label": {
+            "es": "4 cm",
+            "en": "4 cm"
+          },
+          "thickness_cm": 4,
+          "est_kg": 0.6,
+          "est_price": 228
+        }
+      ],
+      "grades": [
+        {
+          "key": "seleccion",
+          "label": {
+            "es": "Selección · BMS 4–5",
+            "en": "Select · BMS 4–5"
+          },
+          "price_per_kg": 380
+        },
+        {
+          "key": "reserva",
+          "label": {
+            "es": "Reserva · BMS 6–7",
+            "en": "Reserve · BMS 6–7"
+          },
+          "price_per_kg": 455
+        }
+      ],
+      "badge": "Más vendido / Best seller",
+      "featured": true,
+      "status": "active"
+    },
+    {
+      "slug": "tomahawk",
+      "cut": "tomahawk",
+      "name": {
+        "es": "Tomahawk Wagyu",
+        "en": "Wagyu Tomahawk"
+      },
+      "sale_type": "portion",
+      "price_unit": "kg",
+      "price_per_kg": 340,
+      "portions": [
+        {
+          "label": {
+            "es": "5 cm",
+            "en": "5 cm"
+          },
+          "thickness_cm": 5,
+          "est_kg": 1.2,
+          "est_price": 408
+        },
+        {
+          "label": {
+            "es": "6 cm",
+            "en": "6 cm"
+          },
+          "thickness_cm": 6,
+          "est_kg": 1.4,
+          "est_price": 476
+        }
+      ],
+      "grades": [
+        {
+          "key": "seleccion",
+          "label": {
+            "es": "Selección · BMS 4–5",
+            "en": "Select · BMS 4–5"
+          },
+          "price_per_kg": 340
+        },
+        {
+          "key": "reserva",
+          "label": {
+            "es": "Reserva · BMS 6–7",
+            "en": "Reserve · BMS 6–7"
+          },
+          "price_per_kg": 410
+        }
+      ],
+      "badge": "Para compartir / To share",
+      "featured": true,
+      "status": "active"
+    },
+    {
+      "slug": "bife-ancho",
+      "cut": "bone-in-ribeye",
+      "name": {
+        "es": "Bife Ancho con Hueso",
+        "en": "Bone-in Ribeye (Cowboy)"
+      },
+      "sale_type": "portion",
+      "price_unit": "kg",
+      "price_per_kg": 350,
+      "portions": [
+        {
+          "label": {
+            "es": "3 cm",
+            "en": "3 cm"
+          },
+          "thickness_cm": 3,
+          "est_kg": 0.55,
+          "est_price": 193
+        },
+        {
+          "label": {
+            "es": "4 cm",
+            "en": "4 cm"
+          },
+          "thickness_cm": 4,
+          "est_kg": 0.75,
+          "est_price": 262
+        }
+      ],
+      "grades": [
+        {
+          "key": "seleccion",
+          "label": {
+            "es": "Selección · BMS 4–5",
+            "en": "Select · BMS 4–5"
+          },
+          "price_per_kg": 350
+        },
+        {
+          "key": "reserva",
+          "label": {
+            "es": "Reserva · BMS 6–7",
+            "en": "Reserve · BMS 6–7"
+          },
+          "price_per_kg": 420
+        }
+      ],
+      "badge": null,
+      "featured": false,
+      "status": "active"
+    },
+    {
+      "slug": "bife-angosto",
+      "cut": "striploin",
+      "name": {
+        "es": "Bife Angosto Wagyu",
+        "en": "Wagyu Striploin"
+      },
+      "sale_type": "portion",
+      "price_unit": "kg",
+      "price_per_kg": 340,
+      "portions": [
+        {
+          "label": {
+            "es": "2 cm",
+            "en": "2 cm"
+          },
+          "thickness_cm": 2,
+          "est_kg": 0.28,
+          "est_price": 95
+        },
+        {
+          "label": {
+            "es": "3 cm",
+            "en": "3 cm"
+          },
+          "thickness_cm": 3,
+          "est_kg": 0.4,
+          "est_price": 136
+        },
+        {
+          "label": {
+            "es": "4 cm",
+            "en": "4 cm"
+          },
+          "thickness_cm": 4,
+          "est_kg": 0.52,
+          "est_price": 177
+        }
+      ],
+      "grades": [
+        {
+          "key": "seleccion",
+          "label": {
+            "es": "Selección · BMS 4–5",
+            "en": "Select · BMS 4–5"
+          },
+          "price_per_kg": 340
+        },
+        {
+          "key": "reserva",
+          "label": {
+            "es": "Reserva · BMS 6–7",
+            "en": "Reserve · BMS 6–7"
+          },
+          "price_per_kg": 410
+        }
+      ],
+      "badge": null,
+      "featured": true,
+      "status": "active"
+    },
+    {
+      "slug": "t-bone",
+      "cut": "t-bone",
+      "name": {
+        "es": "T-Bone Wagyu",
+        "en": "Wagyu T-Bone"
+      },
+      "sale_type": "portion",
+      "price_unit": "kg",
+      "price_per_kg": 320,
+      "portions": [
+        {
+          "label": {
+            "es": "3 cm",
+            "en": "3 cm"
+          },
+          "thickness_cm": 3,
+          "est_kg": 0.65,
+          "est_price": 208
+        },
+        {
+          "label": {
+            "es": "4 cm",
+            "en": "4 cm"
+          },
+          "thickness_cm": 4,
+          "est_kg": 0.85,
+          "est_price": 272
+        }
+      ],
+      "grades": [
+        {
+          "key": "seleccion",
+          "label": {
+            "es": "Selección · BMS 4–5",
+            "en": "Select · BMS 4–5"
+          },
+          "price_per_kg": 320
+        },
+        {
+          "key": "reserva",
+          "label": {
+            "es": "Reserva · BMS 6–7",
+            "en": "Reserve · BMS 6–7"
+          },
+          "price_per_kg": 385
+        }
+      ],
+      "badge": null,
+      "featured": false,
+      "status": "active"
+    },
+    {
+      "slug": "lomo",
+      "cut": "tenderloin",
+      "name": {
+        "es": "Lomo Wagyu (Filet Mignon)",
+        "en": "Wagyu Tenderloin (Filet Mignon)"
+      },
+      "sale_type": "portion",
+      "price_unit": "kg",
+      "price_per_kg": 420,
+      "portions": [
+        {
+          "label": {
+            "es": "3 cm",
+            "en": "3 cm"
+          },
+          "thickness_cm": 3,
+          "est_kg": 0.2,
+          "est_price": 84
+        },
+        {
+          "label": {
+            "es": "4 cm",
+            "en": "4 cm"
+          },
+          "thickness_cm": 4,
+          "est_kg": 0.25,
+          "est_price": 105
+        },
+        {
+          "label": {
+            "es": "5 cm",
+            "en": "5 cm"
+          },
+          "thickness_cm": 5,
+          "est_kg": 0.3,
+          "est_price": 126
+        }
+      ],
+      "grades": [
+        {
+          "key": "seleccion",
+          "label": {
+            "es": "Selección · BMS 4–5",
+            "en": "Select · BMS 4–5"
+          },
+          "price_per_kg": 420
+        },
+        {
+          "key": "reserva",
+          "label": {
+            "es": "Reserva · BMS 6–7",
+            "en": "Reserve · BMS 6–7"
+          },
+          "price_per_kg": 505
+        }
+      ],
+      "badge": "Premium",
+      "featured": true,
+      "status": "active"
+    },
+    {
+      "slug": "picana",
+      "cut": "picanha",
+      "name": {
+        "es": "Picaña Wagyu",
+        "en": "Wagyu Picanha"
+      },
+      "sale_type": "weight",
+      "price_unit": "kg",
+      "price_per_kg": 300,
+      "min_qty": 0.5,
+      "step_qty": 0.25,
+      "grades": [
+        {
+          "key": "seleccion",
+          "label": {
+            "es": "Selección · BMS 4–5",
+            "en": "Select · BMS 4–5"
+          },
+          "price_per_kg": 300
+        },
+        {
+          "key": "reserva",
+          "label": {
+            "es": "Reserva · BMS 6–7",
+            "en": "Reserve · BMS 6–7"
+          },
+          "price_per_kg": 360
+        }
+      ],
+      "prep_options": [
+        "whole",
+        "steaks",
+        "skewers"
+      ],
+      "badge": "Favorito / Favourite",
+      "featured": true,
+      "status": "active"
+    },
+    {
+      "slug": "colita-de-cuadril",
+      "cut": "tri-tip",
+      "name": {
+        "es": "Colita de Cuadril",
+        "en": "Wagyu Tri-tip"
+      },
+      "sale_type": "weight",
+      "price_unit": "kg",
+      "price_per_kg": 240,
+      "min_qty": 0.5,
+      "step_qty": 0.25,
+      "grades": [
+        {
+          "key": "seleccion",
+          "label": {
+            "es": "Selección · BMS 4–5",
+            "en": "Select · BMS 4–5"
+          },
+          "price_per_kg": 240
+        },
+        {
+          "key": "reserva",
+          "label": {
+            "es": "Reserva · BMS 6–7",
+            "en": "Reserve · BMS 6–7"
+          },
+          "price_per_kg": 290
+        }
+      ],
+      "prep_options": [
+        "whole",
+        "steaks"
+      ],
+      "badge": null,
+      "featured": false,
+      "status": "active"
+    },
+    {
+      "slug": "denver",
+      "cut": "denver",
+      "name": {
+        "es": "Denver Steak Wagyu",
+        "en": "Wagyu Denver Steak"
+      },
+      "sale_type": "portion",
+      "price_unit": "kg",
+      "price_per_kg": 220,
+      "portions": [
+        {
+          "label": {
+            "es": "2 cm",
+            "en": "2 cm"
+          },
+          "thickness_cm": 2,
+          "est_kg": 0.25,
+          "est_price": 55
+        },
+        {
+          "label": {
+            "es": "3 cm",
+            "en": "3 cm"
+          },
+          "thickness_cm": 3,
+          "est_kg": 0.35,
+          "est_price": 77
+        }
+      ],
+      "grades": [
+        {
+          "key": "seleccion",
+          "label": {
+            "es": "Selección · BMS 4–5",
+            "en": "Select · BMS 4–5"
+          },
+          "price_per_kg": 220
+        },
+        {
+          "key": "reserva",
+          "label": {
+            "es": "Reserva · BMS 6–7",
+            "en": "Reserve · BMS 6–7"
+          },
+          "price_per_kg": 265
+        }
+      ],
+      "badge": null,
+      "featured": false,
+      "status": "active"
+    },
+    {
+      "slug": "marucha",
+      "cut": "flat-iron",
+      "name": {
+        "es": "Marucha / Flat Iron",
+        "en": "Wagyu Flat Iron"
+      },
+      "sale_type": "weight",
+      "price_unit": "kg",
+      "price_per_kg": 230,
+      "min_qty": 0.5,
+      "step_qty": 0.25,
+      "grades": [
+        {
+          "key": "seleccion",
+          "label": {
+            "es": "Selección · BMS 4–5",
+            "en": "Select · BMS 4–5"
+          },
+          "price_per_kg": 230
+        },
+        {
+          "key": "reserva",
+          "label": {
+            "es": "Reserva · BMS 6–7",
+            "en": "Reserve · BMS 6–7"
+          },
+          "price_per_kg": 275
+        }
+      ],
+      "prep_options": [
+        "whole",
+        "steaks"
+      ],
+      "badge": null,
+      "featured": false,
+      "status": "active"
+    },
+    {
+      "slug": "entrana",
+      "cut": "skirt",
+      "name": {
+        "es": "Entraña Wagyu",
+        "en": "Wagyu Skirt Steak"
+      },
+      "sale_type": "weight",
+      "price_unit": "kg",
+      "price_per_kg": 280,
+      "min_qty": 0.5,
+      "step_qty": 0.25,
+      "grades": [
+        {
+          "key": "seleccion",
+          "label": {
+            "es": "Selección · BMS 4–5",
+            "en": "Select · BMS 4–5"
+          },
+          "price_per_kg": 280
+        },
+        {
+          "key": "reserva",
+          "label": {
+            "es": "Reserva · BMS 6–7",
+            "en": "Reserve · BMS 6–7"
+          },
+          "price_per_kg": 335
+        }
+      ],
+      "prep_options": [
+        "whole",
+        "steaks"
+      ],
+      "badge": null,
+      "featured": true,
+      "status": "active"
+    },
+    {
+      "slug": "vacio",
+      "cut": "flank",
+      "name": {
+        "es": "Vacío Wagyu",
+        "en": "Wagyu Flank"
+      },
+      "sale_type": "weight",
+      "price_unit": "kg",
+      "price_per_kg": 220,
+      "min_qty": 0.5,
+      "step_qty": 0.25,
+      "grades": [
+        {
+          "key": "seleccion",
+          "label": {
+            "es": "Selección · BMS 4–5",
+            "en": "Select · BMS 4–5"
+          },
+          "price_per_kg": 220
+        },
+        {
+          "key": "reserva",
+          "label": {
+            "es": "Reserva · BMS 6–7",
+            "en": "Reserve · BMS 6–7"
+          },
+          "price_per_kg": 265
+        }
+      ],
+      "prep_options": [
+        "whole",
+        "steaks"
+      ],
+      "badge": null,
+      "featured": false,
+      "status": "active"
+    },
+    {
+      "slug": "matambre",
+      "cut": "matambre",
+      "name": {
+        "es": "Matambre Wagyu",
+        "en": "Wagyu Matambre"
+      },
+      "sale_type": "weight",
+      "price_unit": "kg",
+      "price_per_kg": 180,
+      "min_qty": 0.5,
+      "step_qty": 0.25,
+      "grades": [
+        {
+          "key": "seleccion",
+          "label": {
+            "es": "Selección · BMS 4–5",
+            "en": "Select · BMS 4–5"
+          },
+          "price_per_kg": 180
+        },
+        {
+          "key": "reserva",
+          "label": {
+            "es": "Reserva · BMS 6–7",
+            "en": "Reserve · BMS 6–7"
+          },
+          "price_per_kg": 215
+        }
+      ],
+      "prep_options": [
+        "whole",
+        "rolled"
+      ],
+      "badge": null,
+      "featured": false,
+      "status": "active"
+    },
+    {
+      "slug": "tira-de-asado",
+      "cut": "short-ribs",
+      "name": {
+        "es": "Tira de Asado / Short Ribs",
+        "en": "Wagyu Short Ribs"
+      },
+      "sale_type": "weight",
+      "price_unit": "kg",
+      "price_per_kg": 200,
+      "min_qty": 0.5,
+      "step_qty": 0.25,
+      "grades": [
+        {
+          "key": "seleccion",
+          "label": {
+            "es": "Selección · BMS 4–5",
+            "en": "Select · BMS 4–5"
+          },
+          "price_per_kg": 200
+        },
+        {
+          "key": "reserva",
+          "label": {
+            "es": "Reserva · BMS 6–7",
+            "en": "Reserve · BMS 6–7"
+          },
+          "price_per_kg": 240
+        }
+      ],
+      "prep_options": [
+        "cross-cut",
+        "english-cut"
+      ],
+      "badge": null,
+      "featured": false,
+      "status": "active"
+    },
+    {
+      "slug": "pecho",
+      "cut": "brisket",
+      "name": {
+        "es": "Pecho / Brisket Wagyu",
+        "en": "Wagyu Brisket"
+      },
+      "sale_type": "weight",
+      "price_unit": "kg",
+      "price_per_kg": 160,
+      "min_qty": 2,
+      "step_qty": 0.5,
+      "grades": [
+        {
+          "key": "seleccion",
+          "label": {
+            "es": "Selección · BMS 4–5",
+            "en": "Select · BMS 4–5"
+          },
+          "price_per_kg": 160
+        },
+        {
+          "key": "reserva",
+          "label": {
+            "es": "Reserva · BMS 6–7",
+            "en": "Reserve · BMS 6–7"
+          },
+          "price_per_kg": 190
+        }
+      ],
+      "prep_options": [
+        "whole",
+        "flat",
+        "point"
+      ],
+      "badge": null,
+      "featured": false,
+      "status": "active"
+    },
+    {
+      "slug": "yakiniku",
+      "cut": "sliced",
+      "name": {
+        "es": "Wagyu Yakiniku (laminado)",
+        "en": "Wagyu Yakiniku (sliced)"
+      },
+      "sale_type": "weight",
+      "price_unit": "kg",
+      "price_per_kg": 360,
+      "min_qty": 0.25,
+      "step_qty": 0.25,
+      "grades": [
+        {
+          "key": "seleccion",
+          "label": {
+            "es": "Selección · BMS 4–5",
+            "en": "Select · BMS 4–5"
+          },
+          "price_per_kg": 360
+        },
+        {
+          "key": "reserva",
+          "label": {
+            "es": "Reserva · BMS 6–7",
+            "en": "Reserve · BMS 6–7"
+          },
+          "price_per_kg": 430
+        }
+      ],
+      "prep_options": [
+        "sliced-3mm"
+      ],
+      "badge": null,
+      "featured": false,
+      "status": "active"
+    },
+    {
+      "slug": "shabu-shabu",
+      "cut": "sliced",
+      "name": {
+        "es": "Wagyu Shabu-Shabu (laminado)",
+        "en": "Wagyu Shabu-Shabu (sliced)"
+      },
+      "sale_type": "weight",
+      "price_unit": "kg",
+      "price_per_kg": 360,
+      "min_qty": 0.25,
+      "step_qty": 0.25,
+      "grades": [
+        {
+          "key": "seleccion",
+          "label": {
+            "es": "Selección · BMS 4–5",
+            "en": "Select · BMS 4–5"
+          },
+          "price_per_kg": 360
+        },
+        {
+          "key": "reserva",
+          "label": {
+            "es": "Reserva · BMS 6–7",
+            "en": "Reserve · BMS 6–7"
+          },
+          "price_per_kg": 430
+        }
+      ],
+      "prep_options": [
+        "sliced-1.5mm"
+      ],
+      "badge": null,
+      "featured": false,
+      "status": "active"
+    },
+    {
+      "slug": "carne-molida",
+      "cut": "ground",
+      "name": {
+        "es": "Carne Molida Wagyu",
+        "en": "Wagyu Ground Beef"
+      },
+      "sale_type": "weight",
+      "price_unit": "kg",
+      "price_per_kg": 150,
+      "min_qty": 0.5,
+      "step_qty": 0.5,
+      "grades": [
+        {
+          "key": "seleccion",
+          "label": {
+            "es": "Selección · BMS 4–5",
+            "en": "Select · BMS 4–5"
+          },
+          "price_per_kg": 150
+        },
+        {
+          "key": "reserva",
+          "label": {
+            "es": "Reserva · BMS 6–7",
+            "en": "Reserve · BMS 6–7"
+          },
+          "price_per_kg": 180
+        }
+      ],
+      "prep_options": [
+        "ground"
+      ],
+      "badge": null,
+      "featured": false,
+      "status": "active"
+    },
+    {
+      "slug": "hamburguesas-x4",
+      "cut": "burger",
+      "name": {
+        "es": "Hamburguesas Wagyu ×4",
+        "en": "Wagyu Burgers ×4"
+      },
+      "sale_type": "pack",
+      "price_unit": "unit",
+      "price": 140,
+      "description": {
+        "es": "4 medallones de 180 g",
+        "en": "4 × 180 g patties"
+      },
+      "status": "active"
+    },
+    {
+      "slug": "hamburguesas-x6",
+      "cut": "burger",
+      "name": {
+        "es": "Hamburguesas Wagyu ×6",
+        "en": "Wagyu Burgers ×6"
+      },
+      "sale_type": "pack",
+      "price_unit": "unit",
+      "price": 200,
+      "description": {
+        "es": "6 medallones de 180 g",
+        "en": "6 × 180 g patties"
+      },
+      "status": "active"
+    },
+    {
+      "slug": "chimichurri",
+      "cut": null,
+      "name": {
+        "es": "Chimichurri de la Casa",
+        "en": "House Chimichurri"
+      },
+      "sale_type": "addon",
+      "price_unit": "unit",
+      "price": 45,
+      "description": {
+        "es": "Frasco 250 ml",
+        "en": "250 ml jar"
+      },
+      "status": "active"
+    },
+    {
+      "slug": "sal-en-escamas",
+      "cut": null,
+      "name": {
+        "es": "Sal en Escamas",
+        "en": "Flaky Sea Salt"
+      },
+      "sale_type": "addon",
+      "price_unit": "unit",
+      "price": 35,
+      "description": {
+        "es": "Frasco 120 g",
+        "en": "120 g jar"
+      },
+      "status": "active"
+    },
+    {
+      "slug": "carbon",
+      "cut": null,
+      "name": {
+        "es": "Carbón Premium 4 kg",
+        "en": "Premium Lump Charcoal 4 kg"
+      },
+      "sale_type": "addon",
+      "price_unit": "unit",
+      "price": 40,
+      "description": {
+        "es": "Bolsa 4 kg",
+        "en": "4 kg bag"
+      },
+      "status": "active"
+    },
+    {
+      "slug": "empaque-regalo",
+      "cut": null,
+      "name": {
+        "es": "Empaque de Regalo",
+        "en": "Gift Packaging"
+      },
+      "sale_type": "addon",
+      "price_unit": "unit",
+      "price": 30,
+      "description": {
+        "es": "Caja negra con lazo burdeo",
+        "en": "Black box with burgundy ribbon"
+      },
+      "status": "active"
+    }
+  ],
+  "launch_offers": [
+    {
+      "key": "caja-inaugural",
+      "option": "A",
+      "active": false,
+      "name": {
+        "es": "Caja Inaugural Don Corte Fino",
+        "en": "Don Corte Fino Opening Box"
+      },
+      "pitch": {
+        "es": "Edición limitada y numerada: lo mejor de la casa para una parrillada inolvidable.",
+        "en": "Limited, numbered edition: the best of the house for an unforgettable grill night."
+      },
+      "type": "bundle",
+      "items": [
+        {
+          "product": "ojo-de-bife",
+          "est_kg": 0.9,
+          "units": null,
+          "value": 342
+        },
+        {
+          "product": "picana",
+          "est_kg": 1.0,
+          "units": null,
+          "value": 300
+        },
+        {
+          "product": "entrana",
+          "est_kg": 0.5,
+          "units": null,
+          "value": 140
+        },
+        {
+          "product": "hamburguesas-x4",
+          "est_kg": null,
+          "units": 1,
+          "value": 140
+        },
+        {
+          "product": "chimichurri",
+          "est_kg": null,
+          "units": 1,
+          "value": 45
+        },
+        {
+          "product": "sal-en-escamas",
+          "est_kg": null,
+          "units": 1,
+          "value": 35
+        }
+      ],
+      "regular_value": 1002,
+      "launch_price": 849,
+      "limit": {
+        "units": 50,
+        "numbered": true
+      },
+      "ends_after_days": 30,
+      "includes_extra": {
+        "es": "Caja de regalo negra + tarjeta con guía de cocción",
+        "en": "Black gift box + cooking guide card"
+      }
+    },
+    {
+      "key": "club-fundadores",
+      "option": "B",
+      "active": false,
+      "name": {
+        "es": "Club Fundadores",
+        "en": "Founders' Club"
+      },
+      "pitch": {
+        "es": "Para los primeros 100 clientes: 15% de descuento en tu primer pedido y envío gratis hasta 10 km.",
+        "en": "For our first 100 customers: 15% off your first order and free delivery up to 10 km."
+      },
+      "type": "promo_code",
+      "code": "FUNDADOR15",
+      "discount": {
+        "kind": "percent",
+        "value": 15
+      },
+      "min_subtotal": 400,
+      "free_delivery_km": 10,
+      "first_order_only": true,
+      "limit": {
+        "uses": 100
+      },
+      "ends_after_days": 30,
+      "perk": {
+        "es": "Acceso anticipado por WhatsApp a cada nuevo lote",
+        "en": "Early WhatsApp access to every new batch"
+      }
+    },
+    {
+      "key": "experiencia-degustacion",
+      "option": "C",
+      "active": false,
+      "name": {
+        "es": "Experiencia Degustación",
+        "en": "Tasting Experience"
+      },
+      "pitch": {
+        "es": "Cuatro cortes, 250 g cada uno: descubre cuál es tu Wagyu favorito.",
+        "en": "Four cuts, 250 g each: find your favourite Wagyu."
+      },
+      "type": "bundle",
+      "items": [
+        {
+          "product": "ojo-de-bife",
+          "est_kg": 0.25,
+          "units": null,
+          "value": 95
+        },
+        {
+          "product": "bife-angosto",
+          "est_kg": 0.25,
+          "units": null,
+          "value": 85
+        },
+        {
+          "product": "lomo",
+          "est_kg": 0.25,
+          "units": null,
+          "value": 105
+        },
+        {
+          "product": "picana",
+          "est_kg": 0.25,
+          "units": null,
+          "value": 75
+        },
+        {
+          "product": "sal-en-escamas",
+          "est_kg": null,
+          "units": 1,
+          "value": 35
+        }
+      ],
+      "regular_value": 395,
+      "launch_price": 329,
+      "limit": null,
+      "ends_after_days": null,
+      "includes_extra": {
+        "es": "Tarjeta de cata con QR a la guía de cada corte",
+        "en": "Tasting card with a QR code to each cut's guide"
+      },
+      "followup": {
+        "es": "Cupón de 10% para la siguiente compra del corte favorito",
+        "en": "10% coupon on the next order of your favourite cut"
+      }
+    }
+  ]
+}
