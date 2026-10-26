@@ -1,5 +1,6 @@
 "use client";
 
+import Image from "next/image";
 import Link from "next/link";
 import { AnimatePresence, motion } from "motion/react";
 import { useEffect } from "react";
@@ -8,6 +9,7 @@ import { getProduct, type Locale } from "@/lib/catalog";
 import { shapeFor } from "@/lib/cuts";
 import { bs, getDict } from "@/lib/i18n";
 import CutArt from "./CutArt";
+import { productPhoto } from "@/lib/media";
 
 export default function CartDrawer({ locale }: { locale: Locale }) {
   const { items, open, setOpen, setQty, remove, subtotal, add } = useCart();
@@ -63,8 +65,12 @@ export default function CartDrawer({ locale }: { locale: Locale }) {
                     const p = getProduct(i.slug);
                     return (
                       <motion.li layout key={i.id} className="flex gap-4 py-5">
-                        <div className="velvet h-20 w-20 shrink-0">
-                          <CutArt seed={i.slug} shape={p ? shapeFor(p) : "steak"} className="h-full w-full" dense={0.6} />
+                        <div className="velvet relative h-20 w-20 shrink-0 overflow-hidden">
+                          {productPhoto(i.slug) ? (
+                            <Image src={productPhoto(i.slug)!.main.src} alt="" fill sizes="80px" className="object-cover" />
+                          ) : (
+                            <CutArt seed={i.slug} shape={p ? shapeFor(p) : "steak"} className="h-full w-full" dense={0.6} />
+                          )}
                         </div>
                         <div className="min-w-0 flex-1">
                           <p className="font-display text-sm tracking-wide text-bone">{i.name[locale]}</p>

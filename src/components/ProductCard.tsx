@@ -1,5 +1,6 @@
 "use client";
 
+import Image from "next/image";
 import Link from "next/link";
 import { motion, useMotionValue, useSpring, useTransform } from "motion/react";
 import { useState } from "react";
@@ -7,6 +8,7 @@ import { useCart } from "@/lib/cart";
 import { badgeFor, fromPrice, type Locale, type Product } from "@/lib/catalog";
 import { shapeFor } from "@/lib/cuts";
 import { bs, getDict } from "@/lib/i18n";
+import { productPhoto } from "@/lib/media";
 import CutArt from "./CutArt";
 
 export default function ProductCard({ p, locale, large = false }: { p: Product; locale: Locale; large?: boolean }) {
@@ -17,6 +19,7 @@ export default function ProductCard({ p, locale, large = false }: { p: Product; 
   const price = fromPrice(p);
   const badge = badgeFor(p.badge, locale);
   const soldOut = p.status === "sold_out";
+  const photo = productPhoto(p.slug);
 
   const mx = useMotionValue(0.5);
   const my = useMotionValue(0.5);
@@ -42,10 +45,32 @@ export default function ProductCard({ p, locale, large = false }: { p: Product; 
   const href = `/${locale}/cortes/${p.slug}`;
   const art = (
     <div className={`velvet relative ${large ? "aspect-[4/5]" : "aspect-square"} overflow-hidden`}>
-      <div className="marbling absolute inset-0 opacity-[0.07]" />
-      <motion.div className="absolute inset-0" whileHover={{ scale: 1.06 }} transition={{ duration: 0.8 }}>
-        <CutArt seed={p.slug} shape={shapeFor(p)} className="h-full w-full p-4" />
-      </motion.div>
+      {!photo && <div className="marbling absolute inset-0 opacity-[0.07]" />}
+      {photo ? (
+        <>
+          <Image
+            src={photo.main.src}
+            alt={p.name[locale]}
+            fill
+            sizes="(min-width:1024px) 25vw, (min-width:640px) 50vw, 100vw"
+            className="object-cover transition duration-[1.4s] ease-[cubic-bezier(.2,.8,.2,1)] group-hover:scale-110"
+          />
+          {photo.alt && (
+            <Image
+              src={photo.alt.src}
+              alt=""
+              fill
+              sizes="(min-width:1024px) 25vw, 50vw"
+              className="object-cover opacity-0 transition duration-700 group-hover:opacity-100"
+            />
+          )}
+          <div className="absolute inset-0 bg-gradient-to-t from-noir/60 via-transparent to-transparent" />
+        </>
+      ) : (
+        <motion.div className="absolute inset-0" whileHover={{ scale: 1.06 }} transition={{ duration: 0.8 }}>
+          <CutArt seed={p.slug} shape={shapeFor(p)} className="h-full w-full p-4" />
+        </motion.div>
+      )}
       <div className="sheen pointer-events-none absolute inset-y-0 left-0 w-1/3 bg-gradient-to-r from-transparent via-champagne/15 to-transparent opacity-0 group-hover:opacity-100" />
       {badge && <span className="absolute left-4 top-4 bg-noir/80 px-3 py-1.5 text-[0.6rem] font-semibold uppercase tracking-[0.25em] text-champagne">{badge}</span>}
       {soldOut && <span className="absolute right-4 top-4 bg-wine px-3 py-1.5 text-[0.6rem] uppercase tracking-[0.25em]">{d.soldOut}</span>}
@@ -66,7 +91,7 @@ export default function ProductCard({ p, locale, large = false }: { p: Product; 
         my.set(0.5);
       }}
     >
-      {isCut ? <Link href={href}>{art}</Link> : art}
+      {isCut ? <Link href={href} data-cursor={locale === "es" ? "Ver" : "View"}>{art}</Link> : art}
       <div className="flex flex-col gap-3 p-5">
         <div>
           {isCut ? (

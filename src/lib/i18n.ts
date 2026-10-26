@@ -4,6 +4,10 @@ export const LOCALES: Locale[] = ["es", "en"];
 export const isLocale = (v: string): v is Locale => (LOCALES as string[]).includes(v);
 
 const es = {
+  fire: { line1: "¿Comer", line2: "o disfrutar?", sub: "Fuego, sal y un corte Wagyu. No hace falta nada más." },
+  ig: { kicker: "Instagram", title: "Lo que se cocina en casa", cta: "Escríbenos" },
+  scrollHint: "Desliza para descubrir",
+  marbling: "Marmoleo",
   nav: { cuts: "Cortes", shop: "Tienda", boxes: "Cajas", delivery: "Entregas", cart: "Carrito" },
   hero: {
     kicker: "Premium Wagyu Butchery · Santa Cruz de la Sierra",
@@ -200,6 +204,10 @@ const es = {
 export type Dict = typeof es;
 
 const en: Dict = {
+  fire: { line1: "Just eat,", line2: "or truly enjoy?", sub: "Fire, salt and a Wagyu cut. Nothing else needed." },
+  ig: { kicker: "Instagram", title: "What's cooking at home", cta: "Message us" },
+  scrollHint: "Scroll to discover",
+  marbling: "Marbling",
   nav: { cuts: "Cuts", shop: "Shop", boxes: "Boxes", delivery: "Delivery", cart: "Basket" },
   hero: {
     kicker: "Premium Wagyu Butchery · Santa Cruz de la Sierra",

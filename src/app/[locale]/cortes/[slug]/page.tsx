@@ -9,6 +9,9 @@ import { MaskText, Meter, Reveal } from "@/components/Reveal";
 import { badgeFor, cutProducts, fromPrice, getProduct, products, type Locale } from "@/lib/catalog";
 import { CUTS, METHODS, PRIMALS, shapeFor, type Method } from "@/lib/cuts";
 import { bs, getDict, LOCALES } from "@/lib/i18n";
+import { DISH_PHOTOS, productPhoto } from "@/lib/media";
+import Image from "next/image";
+import { RevealImage } from "@/components/motion/primitives";
 
 export const dynamicParams = false;
 export const generateStaticParams = () => LOCALES.flatMap((locale) => cutProducts.map((p) => ({ locale, slug: p.slug })));
@@ -36,6 +39,7 @@ export default async function CutPage({ params }: { params: Promise<{ locale: Lo
   const d = getDict(locale).cut;
   const price = fromPrice(p);
   const badge = badgeFor(p.badge, locale);
+  const photo = productPhoto(p.slug);
   const related = cutProducts.filter((x) => x.slug !== p.slug && x.cut && CUTS[x.cut]?.primal === info.primal).slice(0, 3);
   const extras = products.filter((x) => x.sale_type === "addon").slice(0, 4 - Math.min(related.length, 3));
 
@@ -76,9 +80,18 @@ export default async function CutPage({ params }: { params: Promise<{ locale: Lo
               </p>
             </Reveal>
           </div>
-          <Reveal delay={0.2}>
-            <CutArt seed={p.slug} shape={shapeFor(p)} dense={1.3} className="mx-auto w-full max-w-lg drop-shadow-[0_40px_60px_rgba(0,0,0,0.6)]" />
-          </Reveal>
+          {photo ? (
+            <div className="grid grid-cols-[1fr_0.45fr] gap-3">
+              <RevealImage src={photo.main.src} alt={p.name[locale]} width={photo.main.w} height={photo.main.h} priority className="aspect-[4/5]" sizes="(min-width:1024px) 35vw, 70vw" />
+              {photo.alt && (
+                <RevealImage src={photo.alt.src} alt="" width={photo.alt.w} height={photo.alt.h} className="mt-24 aspect-[3/5]" sizes="20vw" from="right" />
+              )}
+            </div>
+          ) : (
+            <Reveal delay={0.2}>
+              <CutArt seed={p.slug} shape={shapeFor(p)} dense={1.3} className="mx-auto w-full max-w-lg drop-shadow-[0_40px_60px_rgba(0,0,0,0.6)]" />
+            </Reveal>
+          )}
         </div>
       </section>
 
@@ -166,8 +179,8 @@ export default async function CutPage({ params }: { params: Promise<{ locale: Lo
               {info.dishes.map((x, i) => (
                 <Reveal key={i} delay={i * 0.08}>
                   <div className="card group h-full overflow-hidden">
-                    <div className="velvet aspect-[4/3] overflow-hidden">
-                      <CutArt seed={`${p.slug}-dish-${i}`} shape={info.shape === "ground" || info.shape === "burger" ? info.shape : "sliced"} className="h-full w-full transition duration-700 group-hover:scale-110" dense={0.8} />
+                    <div className="relative aspect-[4/3] overflow-hidden">
+                      <Image src={DISH_PHOTOS[i % DISH_PHOTOS.length].src} alt={x[locale]} fill sizes="(min-width:640px) 22vw, 100vw" className="object-cover transition duration-[1.2s] group-hover:scale-110" />
                     </div>
                     <p className="p-5 font-serif text-lg text-bone">{x[locale]}</p>
                   </div>

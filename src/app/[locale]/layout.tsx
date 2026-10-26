@@ -6,6 +6,9 @@ import CartDrawer from "@/components/CartDrawer";
 import Footer from "@/components/Footer";
 import Header from "@/components/Header";
 import WhatsAppFab from "@/components/WhatsAppFab";
+import Cursor from "@/components/motion/Cursor";
+import Preloader from "@/components/motion/Preloader";
+import SmoothScroll from "@/components/motion/SmoothScroll";
 import { CartProvider } from "@/lib/cart";
 import { getDict, isLocale, LOCALES } from "@/lib/i18n";
 
@@ -42,6 +45,9 @@ export default async function LocaleLayout({ children, params }: { children: Rea
   return (
     <html lang={locale} className={`${cinzel.variable} ${cormorant.variable} ${montserrat.variable}`}>
       <body>
+        <Preloader />
+        <SmoothScroll />
+        <Cursor />
         <CartProvider>
           <Header locale={locale} nav={d.nav} />
           <main>{children}</main>

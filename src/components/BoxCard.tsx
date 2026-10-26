@@ -1,10 +1,11 @@
 "use client";
 
+import Image from "next/image";
 import { useState } from "react";
 import { useCart } from "@/lib/cart";
 import { getProduct, type LaunchOffer, type Locale } from "@/lib/catalog";
 import { bs, getDict } from "@/lib/i18n";
-import CutArt from "./CutArt";
+import { BOX_PHOTOS } from "@/lib/media";
 
 export default function BoxCard({ o, locale }: { o: LaunchOffer; locale: Locale }) {
   const d = getDict(locale).boxes;
@@ -21,13 +22,11 @@ export default function BoxCard({ o, locale }: { o: LaunchOffer; locale: Locale 
 
   return (
     <article className="card group grid overflow-hidden md:grid-cols-[0.9fr_1.1fr]">
-      <div className="velvet relative flex min-h-64 items-center justify-center overflow-hidden">
-        <div className="marbling absolute inset-0 opacity-[0.08]" />
-        <div className="relative grid w-4/5 grid-cols-2 gap-1 transition duration-700 group-hover:scale-105">
-          {items.slice(0, 4).map((it, i) => (
-            <CutArt key={it.slug} seed={`${o.key}${i}`} shape={i === 3 ? "burger" : i === 1 ? "roast" : "steak"} dense={0.8} className="w-full" />
-          ))}
-        </div>
+      <div className="velvet relative min-h-80 overflow-hidden">
+        {BOX_PHOTOS[o.key] && (
+          <Image src={BOX_PHOTOS[o.key].src} alt={o.name[locale]} fill sizes="(min-width:1024px) 22vw, 100vw" className="object-cover transition duration-[1.4s] group-hover:scale-110" />
+        )}
+        <div className="absolute inset-0 bg-gradient-to-t from-noir/50 to-transparent" />
         {o.active && o.limit?.numbered && (
           <span className="absolute left-4 top-4 bg-noir/80 px-3 py-1.5 text-[0.6rem] font-semibold uppercase tracking-[0.25em] text-champagne">
             {d.limited} · {o.limit.units}
