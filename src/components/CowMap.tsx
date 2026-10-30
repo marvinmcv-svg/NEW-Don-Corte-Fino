@@ -3,7 +3,8 @@
 import Link from "next/link";
 import { AnimatePresence, motion } from "motion/react";
 import { useState } from "react";
-import { cutProducts, type Locale } from "@/lib/catalog";
+import type { Locale } from "@/lib/catalog";
+import { useCatalog } from "@/lib/catalog-context";
 import { CUTS, PRIMALS, PRIMAL_ORDER, type PrimalKey } from "@/lib/cuts";
 import { getDict } from "@/lib/i18n";
 
@@ -31,7 +32,8 @@ export default function CowMap({ locale, active: fixed }: { locale: Locale; acti
   const d = getDict(locale).map;
   const [hover, setHover] = useState<PrimalKey | null>(fixed ?? "rib");
   const sel = fixed !== undefined ? fixed : hover;
-  const cutsIn = (k: PrimalKey) => cutProducts.filter((p) => p.cut && CUTS[p.cut]?.primal === k);
+  const { cuts } = useCatalog();
+  const cutsIn = (k: PrimalKey) => cuts.filter((p) => p.cut && CUTS[p.cut]?.primal === k);
   const interactive = fixed === undefined;
 
   return (

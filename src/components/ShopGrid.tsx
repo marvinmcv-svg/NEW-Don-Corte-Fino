@@ -2,7 +2,8 @@
 
 import { AnimatePresence, motion } from "motion/react";
 import { useState } from "react";
-import { products, type Locale, type Product } from "@/lib/catalog";
+import type { Locale, Product } from "@/lib/catalog";
+import { useCatalog } from "@/lib/catalog-context";
 import { getDict } from "@/lib/i18n";
 import ProductCard from "./ProductCard";
 
@@ -11,7 +12,8 @@ type Filter = "all" | Product["sale_type"];
 export default function ShopGrid({ locale }: { locale: Locale }) {
   const d = getDict(locale).store;
   const [f, setF] = useState<Filter>("all");
-  const list = products.filter((p) => f === "all" || p.sale_type === f);
+  const { visible } = useCatalog();
+  const list = visible.filter((p) => f === "all" || p.sale_type === f);
   const filters: [Filter, string][] = [["all", d.filterAll], ...(Object.entries(d.filters) as [Filter, string][])];
 
   return (

@@ -9,7 +9,7 @@ import { useCart } from "@/lib/cart";
 import type { Locale } from "@/lib/catalog";
 import type { Dict } from "@/lib/i18n";
 
-export default function Header({ locale, nav }: { locale: Locale; nav: Dict["nav"] }) {
+export default function Header({ locale, nav, banner }: { locale: Locale; nav: Dict["nav"]; banner?: string }) {
   const pathname = usePathname();
   const { count, setOpen, bump } = useCart();
   const [scrolled, setScrolled] = useState(false);
@@ -38,6 +38,7 @@ export default function Header({ locale, nav }: { locale: Locale; nav: Dict["nav
         scrolled || menu ? "border-b border-champagne/10 bg-noir/85 backdrop-blur-md" : "bg-transparent"
       }`}
     >
+      {banner && <div className="bg-burgundy px-4 py-1.5 text-center text-[0.65rem] font-semibold uppercase tracking-[0.2em] text-bone">{banner}</div>}
       <div className="mx-auto flex h-16 max-w-7xl items-center justify-between px-4 md:h-20 md:px-8">
         <Link href={`/${locale}`} className="group flex items-center gap-3" aria-label="Don Corte Fino">
           <Image src="/brand/mark.webp" alt="" width={44} height={44} className="h-9 w-9 md:h-11 md:w-11" priority />

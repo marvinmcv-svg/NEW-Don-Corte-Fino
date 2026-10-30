@@ -4,7 +4,7 @@ import type { Locale } from "@/lib/catalog";
 import { getDict } from "@/lib/i18n";
 import { displayPhone, waLink } from "@/lib/order";
 
-export default function Footer({ locale }: { locale: Locale }) {
+export default function Footer({ locale, whatsapp, instagram }: { locale: Locale; whatsapp: string; instagram?: string | null }) {
   const d = getDict(locale);
   return (
     <footer className="relative overflow-hidden border-t border-champagne/10 bg-noir pt-20">
@@ -15,10 +15,15 @@ export default function Footer({ locale }: { locale: Locale }) {
         </div>
         <div>
           <p className="label mb-5">{d.footer.hours}</p>
-          <a href={waLink()} target="_blank" rel="noopener" className="font-display text-2xl text-bone hover:text-champagne">
-            {displayPhone}
+          <a href={waLink(whatsapp)} target="_blank" rel="noopener" className="font-display text-2xl text-bone hover:text-champagne">
+            {displayPhone(whatsapp)}
           </a>
           <p className="mt-2 text-sm text-ash">Santa Cruz de la Sierra, Bolivia</p>
+          {instagram && (
+            <a href={instagram} target="_blank" rel="noopener" className="mt-4 inline-block text-sm uppercase tracking-[0.2em] text-champagne hover:text-bone">
+              Instagram ↗
+            </a>
+          )}
         </div>
         <div>
           <p className="label mb-5">Menu</p>

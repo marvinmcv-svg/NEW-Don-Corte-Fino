@@ -9,6 +9,8 @@ export async function generateMetadata({ params }: { params: Promise<{ locale: L
   return { title: getDict(locale).store.titleFull };
 }
 
+export const revalidate = 300;
+
 export default async function ShopPage({ params }: { params: Promise<{ locale: Locale }> }) {
   const { locale } = await params;
   const d = getDict(locale).store;

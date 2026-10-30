@@ -28,6 +28,8 @@ export type Product = {
   badge?: string | null;
   featured?: boolean;
   status: "active" | "sold_out" | "hidden";
+  image_url?: string | null;
+  sort?: number;
 };
 
 export type OfferItem = {
@@ -57,38 +59,63 @@ export type LaunchOffer = {
   followup?: L10n;
 };
 
+export type DeliverySettings = {
+  fee_per_km: number;
+  min_fee: number | null;
+  max_km: number | null;
+  origin: { lat: number; lng: number } | null;
+  pickup: boolean;
+};
+
+/** Shop settings, edited in Admin → Ajustes. */
 export type Settings = {
   whatsapp: string;
-  currency: string;
-  delivery: {
-    fee_per_km: number;
-    min_fee: number | null;
-    max_km: number | null;
-    origin: { lat: number; lng: number } | null;
-    pickup: boolean;
-  };
-  payment_methods: { key: string; label: L10n; qr_image?: string | null }[];
-  prices_are_placeholders: boolean;
+  delivery: DeliverySettings;
+  payment_methods: { key: string; label: L10n }[];
+  payment_qr_url: string | null;
+  min_order: number;
+  slots: string[];
+  announcement: { active: boolean; es: string; en: string };
+  instagram_url: string | null;
+};
+
+export type Catalog = {
+  products: Product[];
+  offers: LaunchOffer[];
+  settings: Settings;
+  /** True when the data came from the bundled JSON instead of the database. */
+  fromSeed: boolean;
 };
 
 const data = raw as unknown as {
-  settings: Settings;
+  settings: { whatsapp: string; delivery: DeliverySettings; payment_methods: Settings["payment_methods"] };
   products: Product[];
   launch_offers: LaunchOffer[];
 };
 
-export const settings = data.settings;
-export const products = data.products.filter((p) => p.status !== "hidden");
-export const offers = data.launch_offers;
+export const DEFAULT_SLOTS = ["10:00–12:00", "12:00–14:00", "14:00–16:00", "16:00–18:00", "18:00–20:00"];
 
-export const getProduct = (slug: string) => products.find((p) => p.slug === slug);
+/** Bundled catalogue: used when Supabase isn't configured or can't be reached. */
+export const seedCatalog: Catalog = {
+  products: data.products,
+  offers: data.launch_offers,
+  settings: {
+    whatsapp: data.settings.whatsapp,
+    delivery: data.settings.delivery,
+    payment_methods: data.settings.payment_methods,
+    payment_qr_url: null,
+    min_order: 0,
+    slots: DEFAULT_SLOTS,
+    announcement: { active: false, es: "", en: "" },
+    instagram_url: null,
+  },
+  fromSeed: true,
+};
 
+export const visibleProducts = (c: Catalog) => c.products.filter((p) => p.status !== "hidden");
+export const isCut = (p: Product) => p.sale_type === "portion" || p.sale_type === "weight";
 /** Products that have a cut guide page (real cuts, not packs or add-ons). */
-export const cutProducts = products.filter(
-  (p) => p.sale_type === "portion" || p.sale_type === "weight",
-);
-
-export const featuredProducts = products.filter((p) => p.featured);
+export const cutProductsOf = (c: Catalog) => visibleProducts(c).filter(isCut);
 
 export const PREP_LABELS: Record<string, L10n> = {
   whole: { es: "Pieza entera", en: "Whole piece" },

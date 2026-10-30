@@ -10,6 +10,8 @@ import Cursor from "@/components/motion/Cursor";
 import Preloader from "@/components/motion/Preloader";
 import SmoothScroll from "@/components/motion/SmoothScroll";
 import { CartProvider } from "@/lib/cart";
+import { CatalogProvider } from "@/lib/catalog-context";
+import { getCatalog } from "@/lib/catalog-server";
 import { getDict, isLocale, LOCALES } from "@/lib/i18n";
 
 const cinzel = Cinzel({ subsets: ["latin"], variable: "--font-cinzel", weight: ["400", "500", "600"] });
@@ -42,19 +44,24 @@ export default async function LocaleLayout({ children, params }: { children: Rea
   const { locale } = await params;
   if (!isLocale(locale)) notFound();
   const d = getDict(locale);
+  const catalog = await getCatalog();
+  const { settings } = catalog;
+  const banner = settings.announcement.active ? settings.announcement[locale] : "";
   return (
     <html lang={locale} className={`${cinzel.variable} ${cormorant.variable} ${montserrat.variable}`}>
       <body>
         <Preloader />
         <SmoothScroll />
         <Cursor />
+        <CatalogProvider catalog={catalog}>
         <CartProvider>
-          <Header locale={locale} nav={d.nav} />
+          <Header locale={locale} nav={d.nav} banner={banner} />
           <main>{children}</main>
-          <Footer locale={locale} />
+          <Footer locale={locale} whatsapp={settings.whatsapp} instagram={settings.instagram_url} />
           <CartDrawer locale={locale} />
-          <WhatsAppFab />
+          <WhatsAppFab phone={settings.whatsapp} />
         </CartProvider>
+        </CatalogProvider>
         <script
           type="application/ld+json"
           dangerouslySetInnerHTML={{
@@ -62,7 +69,7 @@ export default async function LocaleLayout({ children, params }: { children: Rea
               "@context": "https://schema.org",
               "@type": "ButcherShop",
               name: "Don Corte Fino",
-              telephone: "+59177665567",
+              telephone: settings.whatsapp,
               address: { "@type": "PostalAddress", addressLocality: "Santa Cruz de la Sierra", addressCountry: "BO" },
               priceRange: "$$$",
               servesCuisine: "Wagyu",

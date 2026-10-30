@@ -258,7 +258,7 @@ export function HorizontalCuts({ locale, d, items }: { locale: Locale; d: Dict; 
           </div>
         </div>
         {items.map((p, i) => {
-          const ph = productPhoto(p.slug);
+          const ph = productPhoto(p);
           const price = fromPrice(p);
           return (
             <Link

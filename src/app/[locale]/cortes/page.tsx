@@ -2,7 +2,8 @@ import type { Metadata } from "next";
 import CowMap from "@/components/CowMap";
 import ProductCard from "@/components/ProductCard";
 import { MaskText, Reveal } from "@/components/Reveal";
-import { cutProducts, type Locale } from "@/lib/catalog";
+import { cutProductsOf, type Locale } from "@/lib/catalog";
+import { getCatalog } from "@/lib/catalog-server";
 import { CUTS, PRIMALS, PRIMAL_ORDER } from "@/lib/cuts";
 import { getDict } from "@/lib/i18n";
 
@@ -11,9 +12,12 @@ export async function generateMetadata({ params }: { params: Promise<{ locale: L
   return { title: getDict(locale).map.kicker };
 }
 
+export const revalidate = 300;
+
 export default async function CutsPage({ params }: { params: Promise<{ locale: Locale }> }) {
   const { locale } = await params;
   const d = getDict(locale);
+  const cutProducts = cutProductsOf(await getCatalog());
   return (
     <div className="px-4 pt-32 pb-28 md:px-8 md:pt-40">
       <div className="mx-auto max-w-7xl">

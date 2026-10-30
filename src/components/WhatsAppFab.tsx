@@ -1,9 +1,9 @@
 import { waLink } from "@/lib/order";
 
-export default function WhatsAppFab() {
+export default function WhatsAppFab({ phone }: { phone: string }) {
   return (
     <a
-      href={waLink()}
+      href={waLink(phone)}
       target="_blank"
       rel="noopener"
       aria-label="WhatsApp"

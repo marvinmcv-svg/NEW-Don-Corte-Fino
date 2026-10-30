@@ -54,6 +54,12 @@ export default function BuyPanel({ p, locale }: { p: Product; locale: Locale }) 
       estKg,
       estimated: p.sale_type === "portion" || p.sale_type === "weight",
       note: note.trim() || undefined,
+      pick: {
+        grade,
+        portion: p.sale_type === "portion" ? portion : undefined,
+        kg: p.sale_type === "weight" ? kg : undefined,
+        prep,
+      },
     });
     setDone(true);
     setTimeout(() => setDone(false), 1500);

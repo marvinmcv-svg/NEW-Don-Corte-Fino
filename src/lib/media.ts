@@ -22,7 +22,9 @@ export const PRODUCT_PHOTOS: Record<string, { main: Photo; alt?: Photo }> = {
   "shabu-shabu": { main: P("scenes/marbling.webp", 640, 1136) },
 };
 
-export const productPhoto = (slug: string) => PRODUCT_PHOTOS[slug];
+/** A photo uploaded in the admin portal wins over the bundled one. */
+export const productPhoto = (p: { slug: string; image_url?: string | null }) =>
+  p.image_url ? { main: { src: p.image_url, w: 1400, h: 1400 }, alt: PRODUCT_PHOTOS[p.slug]?.main } : PRODUCT_PHOTOS[p.slug];
 
 export const SCENES = {
   hero: P("scenes/hero.webp", 2200, 1467),

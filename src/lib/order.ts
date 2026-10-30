@@ -1,44 +1,36 @@
-import { offers, settings, type LaunchOffer, type Locale } from "./catalog";
+import type { DeliverySettings, Locale } from "./catalog";
 import type { CartItem } from "./cart";
 import { bs, getDict } from "./i18n";
 
-export const SLOTS = ["10:00–12:00", "12:00–14:00", "14:00–16:00", "16:00–18:00", "18:00–20:00"];
+const digits = (phone: string) => phone.replace(/\D/g, "");
 
-export const waNumber = settings.whatsapp.replace(/\D/g, "");
-export const waLink = (text?: string) =>
-  `https://wa.me/${waNumber}${text ? `?text=${encodeURIComponent(text)}` : ""}`;
+export const waLink = (phone: string, text?: string) =>
+  `https://wa.me/${digits(phone)}${text ? `?text=${encodeURIComponent(text)}` : ""}`;
 
-export const displayPhone = "776 65567";
-
-/** Promo codes come from the launch offers that are switched on. */
-export function findPromo(code: string): LaunchOffer | undefined {
-  const c = code.trim().toUpperCase();
-  return offers.find((o) => o.active && o.type === "promo_code" && o.code?.toUpperCase() === c);
-}
-
-export function discountFor(promo: LaunchOffer | undefined, subtotal: number) {
-  if (!promo?.discount) return 0;
-  if (promo.min_subtotal && subtotal < promo.min_subtotal) return 0;
-  return promo.discount.kind === "percent" ? (subtotal * promo.discount.value) / 100 : promo.discount.value;
-}
+/** "+59177665567" → "776 65567" */
+export const displayPhone = (phone: string) => {
+  const d = digits(phone).replace(/^591/, "");
+  return d.length === 8 ? `${d.slice(0, 3)} ${d.slice(3)}` : d;
+};
 
 const toRad = (d: number) => (d * Math.PI) / 180;
 
-/** Straight-line distance × 1.3 as a stand-in for road distance (plan §6.3 backup). */
-export function deliveryFee(to: { lat: number; lng: number } | null): { km: number; fee: number } | null {
-  const o = settings.delivery.origin;
+/** Preview of the delivery fee; the database recomputes it when the order is placed. */
+export function deliveryFee(delivery: DeliverySettings, to: { lat: number; lng: number } | null): { km: number; fee: number } | null {
+  const o = delivery.origin;
   if (!o || !to) return null;
   const R = 6371;
   const dLat = toRad(to.lat - o.lat);
   const dLng = toRad(to.lng - o.lng);
   const a = Math.sin(dLat / 2) ** 2 + Math.cos(toRad(o.lat)) * Math.cos(toRad(to.lat)) * Math.sin(dLng / 2) ** 2;
   const km = Math.ceil(2 * R * Math.asin(Math.sqrt(a)) * 1.3);
-  let fee = km * settings.delivery.fee_per_km;
-  if (settings.delivery.min_fee) fee = Math.max(fee, settings.delivery.min_fee);
+  let fee = km * delivery.fee_per_km;
+  if (delivery.min_fee) fee = Math.max(fee, delivery.min_fee);
   return { km, fee };
 }
 
-export const newOrderCode = () => `DCF-${String(Date.now()).slice(-5, -1)}`;
+/** Used only if the database can't be reached, so the WhatsApp order still goes out. */
+export const offlineOrderCode = () => `DCF-W${String(Date.now()).slice(-5, -1)}`;
 
 export type OrderInput = {
   code: string;

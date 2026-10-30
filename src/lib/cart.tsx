@@ -16,6 +16,8 @@ export type CartItem = {
   /** True when the price depends on the final weight. */
   estimated: boolean;
   note?: string;
+  /** What was chosen, sent to place_order so the database can price it. */
+  pick?: { grade?: string; portion?: number; kg?: number; prep?: string; box?: string };
 };
 
 type CartCtx = {

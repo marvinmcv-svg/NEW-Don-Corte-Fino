@@ -4,9 +4,14 @@ import Link from "next/link";
 import { motion } from "motion/react";
 import { useMemo, useState } from "react";
 import { useCart } from "@/lib/cart";
-import { settings, type Locale } from "@/lib/catalog";
+import type { Locale } from "@/lib/catalog";
+import { useCatalog } from "@/lib/catalog-context";
+import { hasSupabase } from "@/lib/supabase/env";
+import { supabaseBrowser } from "@/lib/supabase/browser";
 import { bs, getDict } from "@/lib/i18n";
-import { buildWhatsAppMessage, deliveryFee, discountFor, findPromo, newOrderCode, SLOTS, waLink } from "@/lib/order";
+import { buildWhatsAppMessage, deliveryFee, offlineOrderCode, waLink } from "@/lib/order";
+
+type Promo = { code: string; discount: number; min: number; freeKm: number | null; kind: string; value: number };
 
 function nextDays(locale: Locale, n = 7) {
   const fmt = new Intl.DateTimeFormat(locale === "es" ? "es-BO" : "en-GB", { weekday: "short", day: "2-digit", month: "2-digit" });
@@ -20,11 +25,13 @@ function nextDays(locale: Locale, n = 7) {
 export default function Checkout({ locale }: { locale: Locale }) {
   const d = getDict(locale).checkout;
   const { items, subtotal, clear } = useCart();
+  const { settings } = useCatalog();
+  const SLOTS = settings.slots;
   const days = useMemo(() => nextDays(locale), [locale]);
 
   const [fulfillment, setFulfillment] = useState<"delivery" | "pickup">("delivery");
   const [date, setDate] = useState(days[0]);
-  const [slot, setSlot] = useState(SLOTS[1]);
+  const [slot, setSlot] = useState(SLOTS[1] ?? SLOTS[0]);
   const [name, setName] = useState("");
   const [phone, setPhone] = useState("");
   const [address, setAddress] = useState("");
@@ -34,14 +41,17 @@ export default function Checkout({ locale }: { locale: Locale }) {
   const [payment, setPayment] = useState(settings.payment_methods[0]?.key ?? "cash");
   const [codeInput, setCodeInput] = useState("");
   const [codeState, setCodeState] = useState<"" | "ok" | "bad" | "min">("");
-  const [appliedCode, setAppliedCode] = useState<string>();
+  const [promo, setPromo] = useState<Promo>();
+  const [codeMin, setCodeMin] = useState(0);
+  const [sending, setSending] = useState(false);
   const [error, setError] = useState("");
   const [sent, setSent] = useState<{ code: string; url: string; payment: string } | null>(null);
 
-  const promo = appliedCode ? findPromo(appliedCode) : undefined;
-  const discount = discountFor(promo, subtotal);
-  let shipping = fulfillment === "delivery" ? deliveryFee(geo) : null;
-  if (shipping && promo?.free_delivery_km && shipping.km <= promo.free_delivery_km && discount > 0) shipping = { ...shipping, fee: 0 };
+  // The discount is re-checked against the live subtotal; the database has the final word.
+  const discount = promo && subtotal >= promo.min ? Math.round((promo.kind === "percent" ? (subtotal * promo.value) / 100 : Math.min(promo.value, subtotal)) * 100) / 100 : 0;
+  let shipping = fulfillment === "delivery" ? deliveryFee(settings.delivery, geo) : null;
+  if (shipping && promo?.freeKm && shipping.km <= promo.freeKm && discount > 0) shipping = { ...shipping, fee: 0 };
+  const belowMin = settings.min_order > 0 && subtotal < settings.min_order;
   const total = subtotal - discount + (shipping?.fee ?? 0);
   const payLabel = settings.payment_methods.find((m) => m.key === payment)?.label[locale] ?? payment;
 
@@ -58,43 +68,102 @@ export default function Checkout({ locale }: { locale: Locale }) {
     );
   };
 
-  const applyCode = () => {
-    const p = findPromo(codeInput);
-    if (!p) return setCodeState("bad");
-    if (p.min_subtotal && subtotal < p.min_subtotal) return setCodeState("min");
-    setAppliedCode(p.code);
-    setCodeState("ok");
+  const applyCode = async () => {
+    const code = codeInput.trim();
+    if (!code) return;
+    if (!hasSupabase) return setCodeState("bad");
+    const { data, error } = await supabaseBrowser().rpc("check_promo", { p_code: code, p_subtotal: subtotal });
+    const r = !error && Array.isArray(data) ? data[0] : null;
+    if (!r || (!r.valid && r.reason !== "min")) {
+      setPromo(undefined);
+      return setCodeState("bad");
+    }
+    setCodeMin(Number(r.min_subtotal ?? 0));
+    setPromo({ code: code.toUpperCase(), discount: Number(r.discount), min: Number(r.min_subtotal ?? 0), freeKm: r.free_delivery_km, kind: r.kind, value: Number(r.value) });
+    setCodeState(r.valid ? "ok" : "min");
   };
 
-  const send = () => {
+  const send = async () => {
     if (!name.trim() || !phone.trim() || (fulfillment === "delivery" && !address.trim() && !geo)) {
       setError(d.required);
       return;
     }
+    if (belowMin) return;
     setError("");
-    const code = newOrderCode();
+    setSending(true);
+    // Open the tab now, inside the click, so pop-up blockers allow it; it's pointed at WhatsApp once the order is saved.
+    const tab = window.open("", "_blank");
+    const mapUrl = geo ? `https://maps.google.com/?q=${geo.lat.toFixed(6)},${geo.lng.toFixed(6)}` : undefined;
+
+    let code = offlineOrderCode();
+    let totals = { subtotal, discount, shipping };
+    if (hasSupabase) {
+      const { data, error: rpcError } = await supabaseBrowser().rpc("place_order", {
+        payload: {
+          locale,
+          name: name.trim(),
+          phone: phone.trim(),
+          fulfillment,
+          address: address.trim(),
+          map_url: mapUrl,
+          lat: geo?.lat,
+          lng: geo?.lng,
+          slot_date: date,
+          slot,
+          notes: notes.trim(),
+          payment_method: payment,
+          promo_code: promo && discount > 0 ? promo.code : undefined,
+          items: items.map((i) => ({
+            slug: i.pick?.box ? undefined : i.slug,
+            box: i.pick?.box,
+            grade: i.pick?.grade,
+            portion: i.pick?.portion,
+            kg: i.pick?.kg,
+            qty: i.qty,
+            note: i.note,
+            details: i.details,
+          })),
+        },
+      });
+      if (!rpcError && data) {
+        code = data.code;
+        totals = {
+          subtotal: Number(data.subtotal),
+          discount: Number(data.discount),
+          shipping: data.delivery_fee === null || fulfillment === "pickup" ? null : { km: Number(data.delivery_km), fee: Number(data.delivery_fee) },
+        };
+      } else {
+        // The order still goes out on WhatsApp; the team can enter it by hand.
+        console.warn("place_order failed", rpcError);
+      }
+    }
+
     const text = buildWhatsAppMessage({
       code,
       locale,
       items,
-      subtotal,
-      discount,
-      promoCode: appliedCode,
+      subtotal: totals.subtotal,
+      discount: totals.discount,
+      promoCode: promo?.code,
       fulfillment,
-      shipping,
+      shipping: totals.shipping,
       date,
       slot,
       name: name.trim(),
       phone: phone.trim(),
       address: address.trim(),
-      mapUrl: geo ? `https://maps.google.com/?q=${geo.lat.toFixed(6)},${geo.lng.toFixed(6)}` : undefined,
+      mapUrl,
       notes: notes.trim(),
       payment: payLabel,
     });
-    const url = waLink(text);
+    const url = waLink(settings.whatsapp, text);
     setSent({ code, url, payment });
     clear();
-    window.open(url, "_blank", "noopener");
+    setSending(false);
+    if (tab) {
+      tab.opener = null;
+      tab.location.href = url;
+    } else window.location.href = url;
     window.scrollTo({ top: 0, behavior: "smooth" });
   };
 
@@ -109,6 +178,10 @@ export default function Checkout({ locale }: { locale: Locale }) {
           <h1 className="h-display mt-3 text-3xl">{d.done}</h1>
           <p className="mt-4 font-serif text-lg leading-relaxed text-steel">{d.doneSub}</p>
           <p className="mt-4 text-sm text-ash">{sent.payment === "qr" ? d.qrNote : d.cashNote}</p>
+          {sent.payment === "qr" && settings.payment_qr_url && (
+            // eslint-disable-next-line @next/next/no-img-element
+            <img src={settings.payment_qr_url} alt="QR" className="mx-auto mt-6 w-56 rounded bg-white p-3" />
+          )}
           <div className="mt-8 flex flex-col gap-3">
             <a href={sent.url} target="_blank" rel="noopener" className="btn-primary">
               {d.again}
@@ -238,7 +311,7 @@ export default function Checkout({ locale }: { locale: Locale }) {
               </div>
               {codeState && (
                 <p className={`mt-2 text-xs ${codeState === "ok" ? "text-champagne" : "text-wine"}`}>
-                  {codeState === "ok" ? d.codeOk : codeState === "min" ? `${d.codeMin}: ${bs(findPromo(codeInput)?.min_subtotal ?? 0)}` : d.codeBad}
+                  {codeState === "ok" ? d.codeOk : codeState === "min" ? `${d.codeMin}: ${bs(codeMin)}` : d.codeBad}
                 </p>
               )}
 
@@ -266,8 +339,13 @@ export default function Checkout({ locale }: { locale: Locale }) {
                 <span className="font-display text-3xl">~{bs(total)}</span>
               </div>
               {error && <p className="mt-4 text-sm text-wine">{error}</p>}
-              <button onClick={send} className="btn-primary mt-6 w-full bg-[#1f8f4e] hover:bg-[#25D366]">
-                {d.send}
+              {belowMin && (
+                <p className="mt-4 text-sm text-wine">
+                  {locale === "es" ? "Pedido mínimo" : "Minimum order"}: {bs(settings.min_order)}
+                </p>
+              )}
+              <button onClick={send} disabled={sending || belowMin} className="btn-primary mt-6 w-full bg-[#1f8f4e] hover:bg-[#25D366] disabled:opacity-50">
+                {sending ? "…" : d.send}
               </button>
             </div>
           </aside>

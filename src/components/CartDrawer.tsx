@@ -5,7 +5,8 @@ import Link from "next/link";
 import { AnimatePresence, motion } from "motion/react";
 import { useEffect } from "react";
 import { useCart } from "@/lib/cart";
-import { getProduct, type Locale } from "@/lib/catalog";
+import type { Locale } from "@/lib/catalog";
+import { useCatalog } from "@/lib/catalog-context";
 import { shapeFor } from "@/lib/cuts";
 import { bs, getDict } from "@/lib/i18n";
 import CutArt from "./CutArt";
@@ -14,6 +15,7 @@ import { productPhoto } from "@/lib/media";
 export default function CartDrawer({ locale }: { locale: Locale }) {
   const { items, open, setOpen, setQty, remove, subtotal, add } = useCart();
   const d = getDict(locale).cart;
+  const { getProduct } = useCatalog();
   const chimi = getProduct("chimichurri");
   const hasChimi = items.some((i) => i.slug === "chimichurri");
 
@@ -66,8 +68,8 @@ export default function CartDrawer({ locale }: { locale: Locale }) {
                     return (
                       <motion.li layout key={i.id} className="flex gap-4 py-5">
                         <div className="velvet relative h-20 w-20 shrink-0 overflow-hidden">
-                          {productPhoto(i.slug) ? (
-                            <Image src={productPhoto(i.slug)!.main.src} alt="" fill sizes="80px" className="object-cover" />
+                          {p && productPhoto(p) ? (
+                            <Image src={productPhoto(p)!.main.src} alt="" fill sizes="80px" className="object-cover" />
                           ) : (
                             <CutArt seed={i.slug} shape={p ? shapeFor(p) : "steak"} className="h-full w-full" dense={0.6} />
                           )}

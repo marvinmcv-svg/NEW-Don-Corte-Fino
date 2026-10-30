@@ -19,7 +19,7 @@ export default function ProductCard({ p, locale, large = false }: { p: Product; 
   const price = fromPrice(p);
   const badge = badgeFor(p.badge, locale);
   const soldOut = p.status === "sold_out";
-  const photo = productPhoto(p.slug);
+  const photo = productPhoto(p);
 
   const mx = useMotionValue(0.5);
   const my = useMotionValue(0.5);

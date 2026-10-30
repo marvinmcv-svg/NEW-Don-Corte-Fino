@@ -3,13 +3,15 @@
 import Image from "next/image";
 import { useState } from "react";
 import { useCart } from "@/lib/cart";
-import { getProduct, type LaunchOffer, type Locale } from "@/lib/catalog";
+import type { LaunchOffer, Locale } from "@/lib/catalog";
+import { useCatalog } from "@/lib/catalog-context";
 import { bs, getDict } from "@/lib/i18n";
 import { BOX_PHOTOS } from "@/lib/media";
 
 export default function BoxCard({ o, locale }: { o: LaunchOffer; locale: Locale }) {
   const d = getDict(locale).boxes;
   const { add, setOpen } = useCart();
+  const { getProduct } = useCatalog();
   const [added, setAdded] = useState(false);
   // Launch price only applies while the owner has the offer switched on.
   const price = o.active && o.launch_price ? o.launch_price : o.regular_value ?? 0;
@@ -68,6 +70,7 @@ export default function BoxCard({ o, locale }: { o: LaunchOffer; locale: Locale 
                 unitPrice: price,
                 estKg: null,
                 estimated: false,
+                pick: { box: o.key },
               });
               setAdded(true);
               setTimeout(() => setAdded(false), 1400);

@@ -6,19 +6,25 @@ import CowMap from "@/components/CowMap";
 import CutArt from "@/components/CutArt";
 import ProductCard from "@/components/ProductCard";
 import { MaskText, Meter, Reveal } from "@/components/Reveal";
-import { badgeFor, cutProducts, fromPrice, getProduct, products, type Locale } from "@/lib/catalog";
+import { badgeFor, cutProductsOf, fromPrice, visibleProducts, type Locale } from "@/lib/catalog";
+import { getCatalog } from "@/lib/catalog-server";
 import { CUTS, METHODS, PRIMALS, shapeFor, type Method } from "@/lib/cuts";
 import { bs, getDict, LOCALES } from "@/lib/i18n";
 import { DISH_PHOTOS, productPhoto } from "@/lib/media";
 import Image from "next/image";
 import { RevealImage } from "@/components/motion/primitives";
 
-export const dynamicParams = false;
-export const generateStaticParams = () => LOCALES.flatMap((locale) => cutProducts.map((p) => ({ locale, slug: p.slug })));
+// New cuts added in the admin portal render on first visit, then stay cached.
+export const dynamicParams = true;
+export const revalidate = 300;
+export async function generateStaticParams() {
+  const cuts = cutProductsOf(await getCatalog());
+  return LOCALES.flatMap((locale) => cuts.map((p) => ({ locale, slug: p.slug })));
+}
 
 export async function generateMetadata({ params }: { params: Promise<{ locale: Locale; slug: string }> }): Promise<Metadata> {
   const { locale, slug } = await params;
-  const p = getProduct(slug);
+  const p = cutProductsOf(await getCatalog()).find((x) => x.slug === slug);
   if (!p) return {};
   const info = p.cut ? CUTS[p.cut] : undefined;
   return {
@@ -32,16 +38,18 @@ const ALL_METHODS: Method[] = ["grill", "pan", "oven", "sousvide", "smoker"];
 
 export default async function CutPage({ params }: { params: Promise<{ locale: Locale; slug: string }> }) {
   const { locale, slug } = await params;
-  const p = getProduct(slug);
+  const catalog = await getCatalog();
+  const cutProducts = cutProductsOf(catalog);
+  const p = cutProducts.find((x) => x.slug === slug);
   if (!p || !p.cut) notFound();
   const info = CUTS[p.cut];
   if (!info) notFound();
   const d = getDict(locale).cut;
   const price = fromPrice(p);
   const badge = badgeFor(p.badge, locale);
-  const photo = productPhoto(p.slug);
+  const photo = productPhoto(p);
   const related = cutProducts.filter((x) => x.slug !== p.slug && x.cut && CUTS[x.cut]?.primal === info.primal).slice(0, 3);
-  const extras = products.filter((x) => x.sale_type === "addon").slice(0, 4 - Math.min(related.length, 3));
+  const extras = visibleProducts(catalog).filter((x) => x.sale_type === "addon").slice(0, 4 - Math.min(related.length, 3));
 
   const jsonLd = {
     "@context": "https://schema.org",
