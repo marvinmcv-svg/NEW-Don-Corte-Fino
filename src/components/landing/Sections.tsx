@@ -3,9 +3,11 @@
 import Image from "next/image";
 import Link from "next/link";
 import { useGSAP } from "@gsap/react";
-import { useRef } from "react";
+import { useRef, useState } from "react";
 import HeroGL from "@/components/motion/HeroGL";
 import Magnetic from "@/components/motion/Magnetic";
+import { SplitHeading } from "@/components/motion/primitives";
+import { DeliveryVisual, VacuumVisual } from "./ProcessVisuals";
 import { fromPrice, type Locale, type Product } from "@/lib/catalog";
 import { gsap, LOADED_EVENT, prefersReducedMotion, ScrollTrigger, SplitText } from "@/lib/gsap";
 import { bs, type Dict } from "@/lib/i18n";
@@ -53,7 +55,7 @@ export function HeroSection({ locale, d }: { locale: Locale; d: Dict }) {
       <div className="pointer-events-none absolute inset-0 bg-gradient-to-t from-charcoal via-transparent to-noir/60" />
       <div className="pointer-events-none absolute inset-y-0 left-0 w-2/3 bg-gradient-to-r from-noir/80 to-transparent" />
 
-      <div data-hero-content className="relative z-10 mx-auto flex h-full max-w-[1500px] flex-col justify-end px-4 pb-24 md:px-10 md:pb-16">
+      <div data-hero-content className="relative z-10 mx-auto flex h-full max-w-[1500px] flex-col justify-end px-4 pb-24 md:px-10 md:pb-20">
         <p data-hero-fade className="label mb-6">
           {d.hero.kicker}
         </p>
@@ -61,33 +63,19 @@ export function HeroSection({ locale, d }: { locale: Locale; d: Dict }) {
           {d.hero.title1} <span className="text-champagne">{d.hero.title2}</span>
         </h1>
         <div data-hero-rule className="gold-rule mt-10 max-w-6xl" />
-        <div className="mt-8 flex max-w-6xl flex-col gap-8 md:flex-row md:items-end md:justify-between">
-          <p data-hero-fade className="max-w-md font-serif text-xl leading-relaxed text-steel md:text-2xl">
-            {d.hero.sub}
-          </p>
-          <div data-hero-fade className="flex flex-wrap gap-4">
-            <Magnetic>
-              <Link href={`/${locale}/cortes`} className="btn-primary">
-                {d.hero.ctaCuts}
-              </Link>
-            </Magnetic>
-            <Magnetic>
-              <Link href={`/${locale}/tienda`} className="btn-ghost backdrop-blur-sm">
-                {d.hero.ctaShop}
-              </Link>
-            </Magnetic>
-          </div>
+        <div data-hero-fade className="mt-8">
+          <Magnetic>
+            <Link href={`/${locale}/cortes`} className="btn-primary">
+              {d.hero.ctaCuts}
+            </Link>
+          </Magnetic>
         </div>
       </div>
 
-      <div data-hero-fade className="absolute bottom-6 left-1/2 z-10 hidden -translate-x-1/2 items-center gap-4 md:flex">
-        <span className="relative h-10 w-[22px] rounded-full border border-champagne/40">
+      <div data-hero-fade className="absolute bottom-6 left-1/2 z-10 hidden -translate-x-1/2 md:flex">
+        <span className="relative h-10 w-[22px] rounded-full border border-champagne/40" aria-label={d.scrollHint}>
           <span className="absolute left-1/2 top-2 h-2 w-[2px] -translate-x-1/2 animate-bounce bg-champagne" />
         </span>
-        <span className="label text-[0.58rem] text-steel">{d.scrollHint}</span>
-      </div>
-      <div data-hero-fade className="absolute right-6 top-1/2 z-10 hidden -translate-y-1/2 rotate-90 text-[0.6rem] uppercase tracking-[0.5em] text-steel/60 lg:block">
-        Santa Cruz · 17.78° S · 63.18° W
       </div>
     </section>
   );
@@ -95,16 +83,14 @@ export function HeroSection({ locale, d }: { locale: Locale; d: Dict }) {
 
 /* ───────────────────────────── Manifesto ───────────────────────────── */
 
-const PILLS = [SCENES.marbling, SCENES.seared, SCENES.aging];
+/** Key words light up as the paragraph fills; on desktop each one reveals a photo that trails the cursor. */
+const KEY_PHOTOS = [SCENES.marbling, SCENES.seared, SCENES.grill, SCENES.grill, SCENES.grill, SCENES.tomahawkTall];
 
-export function ManifestoSection({ text }: { text: string }) {
+export function ManifestoSection({ text, keys }: { text: string; keys: string[] }) {
   const root = useRef<HTMLElement>(null);
+  const preview = useRef<HTMLDivElement>(null);
+  const [shown, setShown] = useState<number | null>(null);
   const words = text.split(" ");
-  const pillAt = new Map([
-    [5, 0],
-    [Math.floor(words.length / 2), 1],
-    [words.length - 6, 2],
-  ]);
 
   useGSAP(
     () => {
@@ -114,35 +100,61 @@ export function ManifestoSection({ text }: { text: string }) {
         { opacity: 0.12 },
         { opacity: 1, ease: "none", stagger: 0.1, scrollTrigger: { trigger: root.current, start: "top 70%", end: "bottom 60%", scrub: 0.6 } },
       );
-      gsap.from("[data-pill]", {
-        width: 0,
-        ease: "expo.out",
-        duration: 1.4,
-        stagger: 0.2,
-        scrollTrigger: { trigger: root.current, start: "top 60%" },
+      gsap.utils.toArray<HTMLElement>("[data-key-line]").forEach((line) => {
+        gsap.fromTo(line, { scaleX: 0 }, { scaleX: 1, ease: "none", scrollTrigger: { trigger: line, start: "top 75%", end: "top 55%", scrub: 0.6 } });
       });
+      const el = preview.current!;
+      const xTo = gsap.quickTo(el, "x", { duration: 0.6, ease: "power3" });
+      const yTo = gsap.quickTo(el, "y", { duration: 0.6, ease: "power3" });
+      const rTo = gsap.quickTo(el, "rotate", { duration: 0.8, ease: "power3" });
+      let lastX = 0;
+      const move = (e: PointerEvent) => {
+        const r = root.current!.getBoundingClientRect();
+        xTo(e.clientX - r.left);
+        yTo(e.clientY - r.top);
+        rTo(gsap.utils.clamp(-14, 14, (e.clientX - lastX) * 0.6));
+        lastX = e.clientX;
+      };
+      root.current!.addEventListener("pointermove", move);
+      return () => root.current?.removeEventListener("pointermove", move);
     },
     { scope: root },
   );
 
   return (
     <section ref={root} className="relative px-4 py-32 md:px-10 md:py-48">
+      <div
+        ref={preview}
+        aria-hidden="true"
+        className={`pointer-events-none absolute left-0 top-0 z-20 hidden h-56 w-44 -translate-x-1/2 -translate-y-1/2 overflow-hidden rounded-[999px] transition-[opacity,scale] duration-500 md:block ${shown === null ? "scale-50 opacity-0" : "scale-100 opacity-100"}`}
+      >
+        {KEY_PHOTOS.map((ph, i) => (
+          <Image key={i} src={ph.src} alt="" fill sizes="180px" className={`object-cover transition-opacity duration-500 ${shown === i ? "opacity-100" : "opacity-0"}`} />
+        ))}
+      </div>
       <div className="mx-auto max-w-6xl">
         <div className="mb-14 flex items-center gap-4">
           <span className="text-wine">✦</span>
           <span className="gold-rule flex-1" />
         </div>
         <p className="font-serif text-[2rem] leading-[1.25] text-bone md:text-[3.6rem] md:leading-[1.15]">
-          {words.map((w, i) => (
-            <span key={i}>
-              {pillAt.has(i) && (
-                <span data-pill className="relative mx-2 inline-block h-[0.82em] w-[2.2em] overflow-hidden rounded-full align-[-0.08em]">
-                  <Image src={PILLS[pillAt.get(i)!].src} alt="" fill sizes="200px" className="object-cover" />
+          {words.map((w, i) => {
+            const k = keys.indexOf(w);
+            if (k < 0)
+              return (
+                <span key={i} data-w>
+                  {w}{" "}
                 </span>
-              )}
-              <span data-w>{w} </span>
-            </span>
-          ))}
+              );
+            return (
+              <span key={i}>
+                <span data-w className="relative inline-block cursor-default italic text-champagne" onPointerEnter={() => setShown(k)} onPointerLeave={() => setShown(null)}>
+                  {w}
+                  <span data-key-line className="absolute inset-x-0 -bottom-1 h-px origin-left bg-champagne/70" />
+                </span>{" "}
+              </span>
+            );
+          })}
         </p>
       </div>
     </section>
@@ -188,30 +200,133 @@ export function MarblingSection({ d }: { d: Dict }) {
         ))}
       </h2>
 
-      <div data-copy className="absolute inset-x-0 bottom-0 mx-auto grid max-w-[1500px] gap-10 px-4 pb-14 md:grid-cols-[1.2fr_1fr] md:px-10 md:pb-20">
+      <div data-copy className="absolute inset-x-0 bottom-0 mx-auto grid max-w-[1500px] items-end gap-8 px-4 pb-12 md:grid-cols-[1.1fr_1fr] md:gap-14 md:px-10 md:pb-20">
         <div>
           <p className="label mb-5">{d.wagyu.kicker}</p>
           <h3 className="h-display text-4xl leading-[1.02] md:text-6xl">{d.wagyu.title}</h3>
-          <p className="mt-6 max-w-xl font-serif text-xl leading-relaxed text-steel md:text-2xl">{d.wagyu.body}</p>
+          <p className="mt-6 hidden max-w-xl font-serif text-xl leading-relaxed text-steel sm:block md:text-2xl">{d.wagyu.body}</p>
         </div>
-        <div className="self-end">
-          <div className="border-l-2 border-wine pl-5">
-            <p className="h-display text-lg text-champagne">{d.wagyu.cross}</p>
-            <p className="mt-2 text-sm leading-relaxed text-steel">{d.wagyu.crossBody}</p>
+        <div className="border border-champagne/15 bg-noir/50 p-5 backdrop-blur-md md:p-7">
+          <div className="grid grid-cols-[1fr_auto_1fr] items-start gap-3 md:gap-5">
+            {[
+              { name: "Wagyu", gives: d.wagyu.wagyuGives },
+              null,
+              { name: "Angus", gives: d.wagyu.angusGives },
+            ].map((b, i) =>
+              b ? (
+                <div key={i}>
+                  <p className="h-display text-xl text-bone md:text-2xl">{b.name}</p>
+                  <ul className="mt-3 space-y-1.5 text-[0.8rem] leading-snug text-steel md:text-sm">
+                    {b.gives.map((g) => (
+                      <li key={g} className="flex gap-2">
+                        <span className="text-wine">✦</span>
+                        {g}
+                      </li>
+                    ))}
+                  </ul>
+                </div>
+              ) : (
+                <span key={i} className="font-display text-3xl leading-none text-champagne md:text-4xl">
+                  ×
+                </span>
+              ),
+            )}
           </div>
-          <p className="label mt-8 mb-3">{d.wagyu.bms}</p>
-          <div className="flex h-16 items-end gap-1">
+          <div className="mt-5 flex items-baseline gap-4 border-t border-champagne/15 pt-5">
+            <span className="h-display shrink-0 whitespace-nowrap text-3xl text-champagne md:text-4xl">= Wagus</span>
+            <p className="text-[0.8rem] leading-snug text-steel md:text-sm">
+              <span className="text-bone">{d.wagyu.cross}:</span> {d.wagyu.crossBody}
+            </p>
+          </div>
+          <p className="label mt-6 mb-3">{d.wagyu.bms}</p>
+          <div className="flex h-14 items-end gap-1">
             {Array.from({ length: 12 }, (_, i) => {
               const ours = i >= 3 && i <= 6;
               return (
                 <div key={i} className="flex flex-1 flex-col items-center gap-1.5">
-                  <div data-bms className={`w-full ${ours ? "bg-gradient-to-t from-burgundy to-wine" : "bg-steel/15"}`} style={{ height: `${10 + i * 4}px` }} />
+                  <div data-bms className={`w-full ${ours ? "bg-gradient-to-t from-burgundy to-wine" : "bg-steel/15"}`} style={{ height: `${8 + i * 3.4}px` }} />
                   <span className={`text-[0.6rem] ${ours ? "text-champagne" : "text-ash/50"}`}>{i + 1}</span>
                 </div>
               );
             })}
           </div>
         </div>
+      </div>
+    </section>
+  );
+}
+
+/* ───────────────────────────── Origin: Santa Cruz → feedlot → Brazil ───────────────────────────── */
+
+export function OriginSection({ d }: { d: Dict }) {
+  const root = useRef<HTMLElement>(null);
+  const o = d.origin;
+
+  useGSAP(
+    () => {
+      if (prefersReducedMotion()) return;
+      const tl = gsap.timeline({ scrollTrigger: { trigger: "[data-route]", start: "top 80%", end: "bottom 45%", scrub: 0.8 } });
+      tl.fromTo("[data-route-path]", { strokeDashoffset: 1000 }, { strokeDashoffset: 0, ease: "none", duration: 1 })
+        .from("[data-route-stop]", { scale: 0, transformOrigin: "center", stagger: 0.4, duration: 0.2, ease: "back.out(3)" }, 0)
+        .from("[data-route-label]", { autoAlpha: 0, y: 16, stagger: 0.4, duration: 0.25 }, 0.05);
+      gsap.from("[data-opoint]", { y: 50, autoAlpha: 0, stagger: 0.12, duration: 1.1, ease: "expo.out", scrollTrigger: { trigger: "[data-opoints]", start: "top 80%" } });
+      gsap.to("[data-topo]", { yPercent: -12, ease: "none", scrollTrigger: { trigger: root.current, start: "top bottom", end: "bottom top", scrub: true } });
+    },
+    { scope: root },
+  );
+
+  return (
+    <section ref={root} id="origen" className="relative scroll-mt-20 overflow-hidden bg-noir px-4 py-28 md:px-10 md:py-40">
+      {/* contour lines, like a survey map of the plains */}
+      <svg data-topo aria-hidden="true" className="pointer-events-none absolute inset-0 h-[120%] w-full opacity-[0.07]" viewBox="0 0 800 600" preserveAspectRatio="xMidYMid slice">
+        {Array.from({ length: 14 }, (_, i) => (
+          <path key={i} d={`M-20 ${60 + i * 38} C 160 ${20 + i * 40}, 300 ${110 + i * 36}, 460 ${50 + i * 39} S 720 ${90 + i * 37}, 840 ${40 + i * 40}`} fill="none" stroke="#D6C5A7" strokeWidth="1" />
+        ))}
+      </svg>
+
+      <div className="relative mx-auto max-w-[1500px]">
+        <div className="grid gap-12 lg:grid-cols-[1.1fr_1fr] lg:items-end">
+          <div>
+            <p className="label mb-5">{o.kicker}</p>
+            <SplitHeading className="h-display text-4xl leading-[1.02] md:text-7xl">{o.title}</SplitHeading>
+          </div>
+          <p className="max-w-xl font-serif text-xl leading-relaxed text-steel md:text-2xl">{o.body}</p>
+        </div>
+
+        <svg data-route viewBox="0 0 1000 160" className="mt-16 w-full overflow-visible md:mt-24" role="img" aria-label={`${o.from} → ${o.farm} → ${o.to}`}>
+          <path data-route-path d="M40 110 C 220 30, 380 140, 520 80 S 820 40, 960 70" fill="none" stroke="#D6C5A7" strokeWidth="1.5" strokeDasharray="1000" />
+          <path d="M960 70 L 1000 66" stroke="#D6C5A7" strokeOpacity=".4" strokeDasharray="4 6" />
+          {[
+            { x: 40, y: 110, label: o.from, sub: "17.8° S · 63.2° W", main: false, anchor: "start" as const },
+            { x: 520, y: 80, label: o.farm, sub: "Wagus", main: true, anchor: "middle" as const },
+            { x: 960, y: 70, label: o.to, sub: "→", main: false, anchor: "end" as const },
+          ].map((p) => (
+            <g key={p.label}>
+              {p.main && (
+                <circle cx={p.x} cy={p.y} r="22" fill="none" stroke="#7E2C3E" strokeWidth="1.5" className="origin-center animate-ping [transform-box:fill-box]" />
+              )}
+              <circle data-route-stop cx={p.x} cy={p.y} r={p.main ? 10 : 6} fill={p.main ? "#7E2C3E" : "#D6C5A7"} stroke="#D6C5A7" strokeWidth={p.main ? 2 : 0} />
+              <g data-route-label>
+                <text x={p.anchor === "start" ? p.x - 6 : p.anchor === "end" ? p.x + 6 : p.x} y={p.y + (p.main ? -34 : 38)} textAnchor={p.anchor} className="fill-bone font-display text-[22px] tracking-[0.08em]">
+                  {p.label}
+                </text>
+                <text x={p.anchor === "start" ? p.x - 6 : p.anchor === "end" ? p.x + 6 : p.x} y={p.y + (p.main ? -14 : 58)} textAnchor={p.anchor} className="fill-champagne text-[12px] uppercase tracking-[0.3em]">
+                  {p.sub}
+                </text>
+              </g>
+            </g>
+          ))}
+        </svg>
+
+        <ol data-opoints className="mt-16 grid gap-px bg-champagne/10 md:mt-24 md:grid-cols-3">
+          {o.points.map((pt, i) => (
+            <li key={pt.t} data-opoint className="bg-noir p-6 md:p-10">
+              <span className="font-display text-sm text-champagne">0{i + 1}</span>
+              <h3 className="h-display mt-4 text-2xl md:text-3xl">{pt.t}</h3>
+              <p className="mt-3 leading-relaxed text-steel">{pt.d}</p>
+            </li>
+          ))}
+        </ol>
       </div>
     </section>
   );
@@ -296,7 +411,23 @@ export function HorizontalCuts({ locale, d, items }: { locale: Locale; d: Dict; 
 
 /* ───────────────────────────── Process: pinned image stack ───────────────────────────── */
 
-const PROCESS_IMAGES = [SCENES.selection, SCENES.aging, SCENES.butcher, SCENES.hero, SCENES.seared];
+/** One panel per step: the butcher with the meat, the ageing room, the knife, the sealed pack, the route home. */
+function processPanels(d: Dict, sizes: string) {
+  const photo = (ph: { src: string }, alt: string) => (
+    <>
+      <Image data-pzoom src={ph.src} alt={alt} fill sizes={sizes} className="object-cover" />
+      <div className="absolute inset-0 bg-gradient-to-t from-noir/50 to-transparent" />
+    </>
+  );
+  const s = d.process.steps;
+  return [
+    photo(SCENES.butcher, s[0].t),
+    photo(SCENES.aging, s[1].t),
+    photo(SCENES.slicing, s[2].t),
+    <VacuumVisual key="vac" />,
+    <DeliveryVisual key="del" label={d.delivery.kicker} cold={d.process.cold} />,
+  ];
+}
 
 export function ProcessSection({ d }: { d: Dict }) {
   const root = useRef<HTMLElement>(null);
@@ -315,7 +446,7 @@ export function ProcessSection({ d }: { d: Dict }) {
         });
         imgs.slice(1).forEach((img, i) => {
           tl.to(img, { clipPath: "inset(0% 0% 0% 0%)", ease: "power3.inOut", duration: 1 }, i)
-            .fromTo(img.querySelector("img"), { scale: 1.4 }, { scale: 1, ease: "power3.out", duration: 1 }, i)
+            .fromTo(img.querySelector("[data-pzoom]"), { scale: 1.4 }, { scale: 1, ease: "power3.out", duration: 1 }, i)
             .to(items[i], { opacity: 0.2, duration: 0.4 }, i + 0.2)
             .to(items[i + 1], { opacity: 1, duration: 0.4 }, i + 0.3)
             .to("[data-pnum]", { yPercent: (-100 / imgs.length) * (i + 1), ease: "power3.inOut", duration: 0.8 }, i + 0.1);
@@ -354,17 +485,16 @@ export function ProcessSection({ d }: { d: Dict }) {
           </ol>
         </div>
         <div className="relative hidden h-[76vh] w-full overflow-hidden lg:block">
-          {PROCESS_IMAGES.map((img, i) => (
+          {processPanels(d, "50vw").map((panel, i) => (
             <div key={i} data-pimg className="absolute inset-0 overflow-hidden">
-              <Image src={img.src} alt={steps[i]?.t ?? ""} fill sizes="50vw" className="object-cover" />
-              <div className="absolute inset-0 bg-gradient-to-t from-noir/50 to-transparent" />
+              {panel}
             </div>
           ))}
         </div>
         <div className="grid grid-cols-2 gap-3 lg:hidden">
-          {PROCESS_IMAGES.slice(1, 5).map((img, i) => (
-            <div key={i} className="relative aspect-square overflow-hidden">
-              <Image src={img.src} alt="" fill sizes="50vw" className="object-cover" />
+          {processPanels(d, "50vw").map((panel, i) => (
+            <div key={i} className={`relative overflow-hidden ${i === 0 ? "col-span-2 aspect-[16/9]" : "aspect-square"}`}>
+              {panel}
             </div>
           ))}
         </div>

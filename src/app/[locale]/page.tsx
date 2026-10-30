@@ -1,8 +1,8 @@
 import Link from "next/link";
 import BoxCard from "@/components/BoxCard";
-import CowMap from "@/components/CowMap";
+import Cow3D from "@/components/cow3d/Cow3D";
 import ProductCard from "@/components/ProductCard";
-import { FireSection, HeroSection, HorizontalCuts, InstaStrip, ManifestoSection, MarblingSection, ProcessSection } from "@/components/landing/Sections";
+import { FireSection, HeroSection, HorizontalCuts, InstaStrip, ManifestoSection, MarblingSection, OriginSection, ProcessSection } from "@/components/landing/Sections";
 import Magnetic from "@/components/motion/Magnetic";
 import { RevealImage, SplitHeading, Stagger } from "@/components/motion/primitives";
 import { cutProductsOf, visibleProducts, type Locale } from "@/lib/catalog";
@@ -43,14 +43,15 @@ export default async function Home({ params }: { params: Promise<{ locale: Local
       )}
 
       <HeroSection locale={locale} d={d} />
-      <ManifestoSection text={d.manifesto} />
+      <ManifestoSection text={d.manifesto} keys={d.manifestoKeys} />
       <MarblingSection d={d} />
+      <OriginSection d={d} />
 
       {/* Cow map */}
       <section className="px-4 py-28 md:px-10 md:py-40">
         <div className="mx-auto max-w-[1500px]">
           <Head kicker={d.map.kicker} title={d.map.title} />
-          <CowMap locale={locale} />
+          <Cow3D locale={locale} />
         </div>
       </section>
 
@@ -110,7 +111,7 @@ export default async function Home({ params }: { params: Promise<{ locale: Local
               </Magnetic>
             </div>
           </div>
-          <RevealImage src={SCENES.tomahawkTall.src} alt="Tomahawk Wagyu" width={SCENES.tomahawkTall.w} height={SCENES.tomahawkTall.h} className="aspect-[3/4]" sizes="(min-width:1024px) 40vw, 100vw" />
+          <RevealImage src={SCENES.tomahawkTall.src} alt="Tomahawk Wagus" width={SCENES.tomahawkTall.w} height={SCENES.tomahawkTall.h} className="aspect-[3/4]" sizes="(min-width:1024px) 40vw, 100vw" />
         </div>
       </section>
     </>

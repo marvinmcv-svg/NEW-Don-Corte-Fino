@@ -38,6 +38,7 @@ export const SCENES = {
   slicing: P("scenes/slicing.webp", 640, 1136),
   tomahawkTall: P("cuts/tomahawk-tall.webp", 1184, 1775),
   ribeyePlate: P("cuts/ribeye-plate.webp", 1400, 1400),
+  vacuumCut: P("cuts/bife-angosto.webp", 1400, 1400),
 };
 
 /** Instagram posts, in the order shown on the social strip. */

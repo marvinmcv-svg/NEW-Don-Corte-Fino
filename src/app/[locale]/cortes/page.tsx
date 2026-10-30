@@ -1,5 +1,5 @@
 import type { Metadata } from "next";
-import CowMap from "@/components/CowMap";
+import Cow3D from "@/components/cow3d/Cow3D";
 import ProductCard from "@/components/ProductCard";
 import { MaskText, Reveal } from "@/components/Reveal";
 import { cutProductsOf, type Locale } from "@/lib/catalog";
@@ -26,7 +26,7 @@ export default async function CutsPage({ params }: { params: Promise<{ locale: L
           <MaskText text={d.map.title} />
         </h1>
         <div className="mt-16">
-          <CowMap locale={locale} />
+          <Cow3D locale={locale} />
         </div>
         {PRIMAL_ORDER.map((k) => {
           const list = cutProducts.filter((p) => p.cut && CUTS[p.cut]?.primal === k);

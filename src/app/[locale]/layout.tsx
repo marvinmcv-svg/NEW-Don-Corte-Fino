@@ -29,12 +29,12 @@ export async function generateMetadata({ params }: { params: Promise<{ locale: s
   return {
     metadataBase: new URL(process.env.NEXT_PUBLIC_SITE_URL ?? "https://don-corte-fino.vercel.app"),
     title: {
-      default: es ? "Don Corte Fino · Carnicería Wagyu Premium en Santa Cruz" : "Don Corte Fino · Premium Wagyu Butchery in Santa Cruz",
+      default: es ? "Don Corte Fino · Carne Wagus (Wagyu × Angus) en Santa Cruz" : "Don Corte Fino · Wagus Beef (Wagyu × Angus) in Santa Cruz",
       template: "%s · Don Corte Fino",
     },
     description: es
-      ? "Wagyu × Angus seleccionado y cortado a mano. Guía de cortes, tienda online y pedidos por WhatsApp con entrega en Santa Cruz de la Sierra."
-      : "Hand-selected, hand-cut Wagyu × Angus. Cut guide, online shop and WhatsApp ordering with delivery across Santa Cruz de la Sierra.",
+      ? "Wagus: Wagyu × Angus terminado a corral en Santa Cruz, Bolivia, y cortado a mano. Guía de cortes, tienda online y pedidos por WhatsApp con entrega en Santa Cruz de la Sierra."
+      : "Wagus: Wagyu × Angus, feedlot-finished in Santa Cruz, Bolivia, and cut by hand. Cut guide, online shop and WhatsApp ordering with delivery across Santa Cruz de la Sierra.",
     alternates: { languages: { es: "/es", en: "/en" } },
     openGraph: { siteName: "Don Corte Fino", locale: es ? "es_BO" : "en_US", type: "website" },
   };
@@ -72,7 +72,7 @@ export default async function LocaleLayout({ children, params }: { children: Rea
               telephone: settings.whatsapp,
               address: { "@type": "PostalAddress", addressLocality: "Santa Cruz de la Sierra", addressCountry: "BO" },
               priceRange: "$$$",
-              servesCuisine: "Wagyu",
+              servesCuisine: "Wagus (Wagyu × Angus) beef",
             }),
           }}
         />
