@@ -36,8 +36,8 @@
       "slug": "ojo-de-bife",
       "cut": "ribeye",
       "name": {
-        "es": "Ojo de Bife Wagus",
-        "en": "Wagus Ribeye"
+        "es": "Ojo de Bife Wangus",
+        "en": "Wangus Ribeye"
       },
       "sale_type": "portion",
       "price_unit": "kg",
@@ -97,8 +97,8 @@
       "slug": "tomahawk",
       "cut": "tomahawk",
       "name": {
-        "es": "Tomahawk Wagus",
-        "en": "Wagus Tomahawk"
+        "es": "Tomahawk Wangus",
+        "en": "Wangus Tomahawk"
       },
       "sale_type": "portion",
       "price_unit": "kg",
@@ -201,8 +201,8 @@
       "slug": "bife-angosto",
       "cut": "striploin",
       "name": {
-        "es": "Bife Angosto Wagus",
-        "en": "Wagus Striploin"
+        "es": "Bife Angosto Wangus",
+        "en": "Wangus Striploin"
       },
       "sale_type": "portion",
       "price_unit": "kg",
@@ -262,8 +262,8 @@
       "slug": "t-bone",
       "cut": "t-bone",
       "name": {
-        "es": "T-Bone Wagus",
-        "en": "Wagus T-Bone"
+        "es": "T-Bone Wangus",
+        "en": "Wangus T-Bone"
       },
       "sale_type": "portion",
       "price_unit": "kg",
@@ -314,8 +314,8 @@
       "slug": "lomo",
       "cut": "tenderloin",
       "name": {
-        "es": "Lomo Wagus (Filet Mignon)",
-        "en": "Wagus Tenderloin (Filet Mignon)"
+        "es": "Lomo Wangus (Filet Mignon)",
+        "en": "Wangus Tenderloin (Filet Mignon)"
       },
       "sale_type": "portion",
       "price_unit": "kg",
@@ -375,8 +375,8 @@
       "slug": "picana",
       "cut": "picanha",
       "name": {
-        "es": "Picaña Wagus",
-        "en": "Wagus Picanha"
+        "es": "Picaña Wangus",
+        "en": "Wangus Picanha"
       },
       "sale_type": "weight",
       "price_unit": "kg",
@@ -415,7 +415,7 @@
       "cut": "tri-tip",
       "name": {
         "es": "Colita de Cuadril",
-        "en": "Wagus Tri-tip"
+        "en": "Wangus Tri-tip"
       },
       "sale_type": "weight",
       "price_unit": "kg",
@@ -452,8 +452,8 @@
       "slug": "denver",
       "cut": "denver",
       "name": {
-        "es": "Denver Steak Wagus",
-        "en": "Wagus Denver Steak"
+        "es": "Denver Steak Wangus",
+        "en": "Wangus Denver Steak"
       },
       "sale_type": "portion",
       "price_unit": "kg",
@@ -505,7 +505,7 @@
       "cut": "flat-iron",
       "name": {
         "es": "Marucha / Flat Iron",
-        "en": "Wagus Flat Iron"
+        "en": "Wangus Flat Iron"
       },
       "sale_type": "weight",
       "price_unit": "kg",
@@ -542,8 +542,8 @@
       "slug": "entrana",
       "cut": "skirt",
       "name": {
-        "es": "Entraña Wagus",
-        "en": "Wagus Skirt Steak"
+        "es": "Entraña Wangus",
+        "en": "Wangus Skirt Steak"
       },
       "sale_type": "weight",
       "price_unit": "kg",
@@ -580,8 +580,8 @@
       "slug": "vacio",
       "cut": "flank",
       "name": {
-        "es": "Vacío Wagus",
-        "en": "Wagus Flank"
+        "es": "Vacío Wangus",
+        "en": "Wangus Flank"
       },
       "sale_type": "weight",
       "price_unit": "kg",
@@ -618,8 +618,8 @@
       "slug": "matambre",
       "cut": "matambre",
       "name": {
-        "es": "Matambre Wagus",
-        "en": "Wagus Matambre"
+        "es": "Matambre Wangus",
+        "en": "Wangus Matambre"
       },
       "sale_type": "weight",
       "price_unit": "kg",
@@ -657,7 +657,7 @@
       "cut": "short-ribs",
       "name": {
         "es": "Tira de Asado / Short Ribs",
-        "en": "Wagus Short Ribs"
+        "en": "Wangus Short Ribs"
       },
       "sale_type": "weight",
       "price_unit": "kg",
@@ -694,8 +694,8 @@
       "slug": "pecho",
       "cut": "brisket",
       "name": {
-        "es": "Pecho / Brisket Wagus",
-        "en": "Wagus Brisket"
+        "es": "Pecho / Brisket Wangus",
+        "en": "Wangus Brisket"
       },
       "sale_type": "weight",
       "price_unit": "kg",
@@ -733,8 +733,8 @@
       "slug": "yakiniku",
       "cut": "sliced",
       "name": {
-        "es": "Wagus Yakiniku (laminado)",
-        "en": "Wagus Yakiniku (sliced)"
+        "es": "Wangus Yakiniku (laminado)",
+        "en": "Wangus Yakiniku (sliced)"
       },
       "sale_type": "weight",
       "price_unit": "kg",
@@ -770,8 +770,8 @@
       "slug": "shabu-shabu",
       "cut": "sliced",
       "name": {
-        "es": "Wagus Shabu-Shabu (laminado)",
-        "en": "Wagus Shabu-Shabu (sliced)"
+        "es": "Wangus Shabu-Shabu (laminado)",
+        "en": "Wangus Shabu-Shabu (sliced)"
       },
       "sale_type": "weight",
       "price_unit": "kg",
@@ -807,8 +807,8 @@
       "slug": "carne-molida",
       "cut": "ground",
       "name": {
-        "es": "Carne Molida Wagus",
-        "en": "Wagus Ground Beef"
+        "es": "Carne Molida Wangus",
+        "en": "Wangus Ground Beef"
       },
       "sale_type": "weight",
       "price_unit": "kg",
@@ -844,8 +844,8 @@
       "slug": "hamburguesas-x4",
       "cut": "burger",
       "name": {
-        "es": "Hamburguesas Wagus ×4",
-        "en": "Wagus Burgers ×4"
+        "es": "Hamburguesas Wangus ×4",
+        "en": "Wangus Burgers ×4"
       },
       "sale_type": "pack",
       "price_unit": "unit",
@@ -860,8 +860,8 @@
       "slug": "hamburguesas-x6",
       "cut": "burger",
       "name": {
-        "es": "Hamburguesas Wagus ×6",
-        "en": "Wagus Burgers ×6"
+        "es": "Hamburguesas Wangus ×6",
+        "en": "Wangus Burgers ×6"
       },
       "sale_type": "pack",
       "price_unit": "unit",
@@ -1040,8 +1040,8 @@
         "en": "Tasting Experience"
       },
       "pitch": {
-        "es": "Cuatro cortes, 250 g cada uno: descubre cuál es tu Wagus favorito.",
-        "en": "Four cuts, 250 g each: find your favourite Wagus."
+        "es": "Cuatro cortes, 250 g cada uno: descubre cuál es tu Wangus favorito.",
+        "en": "Four cuts, 250 g each: find your favourite Wangus."
       },
       "type": "bundle",
       "items": [

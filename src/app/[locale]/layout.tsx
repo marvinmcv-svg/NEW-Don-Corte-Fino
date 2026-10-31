@@ -5,6 +5,7 @@ import "../globals.css";
 import CartDrawer from "@/components/CartDrawer";
 import Footer from "@/components/Footer";
 import Header from "@/components/Header";
+import VacaLola from "@/components/VacaLola";
 import WhatsAppFab from "@/components/WhatsAppFab";
 import Cursor from "@/components/motion/Cursor";
 import Preloader from "@/components/motion/Preloader";
@@ -29,12 +30,12 @@ export async function generateMetadata({ params }: { params: Promise<{ locale: s
   return {
     metadataBase: new URL(process.env.NEXT_PUBLIC_SITE_URL ?? "https://don-corte-fino.vercel.app"),
     title: {
-      default: es ? "Don Corte Fino · Carne Wagus (Wagyu × Angus) en Santa Cruz" : "Don Corte Fino · Wagus Beef (Wagyu × Angus) in Santa Cruz",
+      default: es ? "Don Corte Fino · Carne Wangus (Wagyu × Angus) en Santa Cruz" : "Don Corte Fino · Wangus Beef (Wagyu × Angus) in Santa Cruz",
       template: "%s · Don Corte Fino",
     },
     description: es
-      ? "Wagus: Wagyu × Angus terminado a corral en Santa Cruz, Bolivia, y cortado a mano. Guía de cortes, tienda online y pedidos por WhatsApp con entrega en Santa Cruz de la Sierra."
-      : "Wagus: Wagyu × Angus, feedlot-finished in Santa Cruz, Bolivia, and cut by hand. Cut guide, online shop and WhatsApp ordering with delivery across Santa Cruz de la Sierra.",
+      ? "Wangus: Wagyu × Angus terminado a corral en Santa Cruz, Bolivia, y cortado a mano. Guía de cortes, tienda online y pedidos por WhatsApp con entrega en Santa Cruz de la Sierra."
+      : "Wangus: Wagyu × Angus, feedlot-finished in Santa Cruz, Bolivia, and cut by hand. Cut guide, online shop and WhatsApp ordering with delivery across Santa Cruz de la Sierra.",
     alternates: { languages: { es: "/es", en: "/en" } },
     openGraph: { siteName: "Don Corte Fino", locale: es ? "es_BO" : "en_US", type: "website" },
   };
@@ -57,9 +58,10 @@ export default async function LocaleLayout({ children, params }: { children: Rea
         <CartProvider>
           <Header locale={locale} nav={d.nav} banner={banner} />
           <main>{children}</main>
-          <Footer locale={locale} whatsapp={settings.whatsapp} instagram={settings.instagram_url} />
+          <Footer locale={locale} whatsapp={settings.whatsapp} socials={{ instagram: settings.instagram_url, facebook: settings.facebook_url, tiktok: settings.tiktok_url }} />
           <CartDrawer locale={locale} />
           <WhatsAppFab phone={settings.whatsapp} />
+          <VacaLola locale={locale} />
         </CartProvider>
         </CatalogProvider>
         <script
@@ -72,7 +74,7 @@ export default async function LocaleLayout({ children, params }: { children: Rea
               telephone: settings.whatsapp,
               address: { "@type": "PostalAddress", addressLocality: "Santa Cruz de la Sierra", addressCountry: "BO" },
               priceRange: "$$$",
-              servesCuisine: "Wagus (Wagyu × Angus) beef",
+              servesCuisine: "Wangus (Wagyu × Angus) beef",
             }),
           }}
         />

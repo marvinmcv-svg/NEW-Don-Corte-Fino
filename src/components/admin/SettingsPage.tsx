@@ -8,6 +8,8 @@ import { Button, Field, Input, PageHeader, Panel, Textarea, Toggle, refreshSite,
 type S = {
   whatsapp: string;
   instagram_url: string;
+  facebook_url: string;
+  tiktok_url: string;
   fee_per_km: string;
   min_fee: string;
   max_km: string;
@@ -42,6 +44,8 @@ export default function SettingsPage() {
         setS({
           whatsapp: kv.whatsapp ?? "",
           instagram_url: kv.instagram_url ?? "",
+          facebook_url: kv.facebook_url ?? "",
+          tiktok_url: kv.tiktok_url ?? "",
           fee_per_km: String(d.fee_per_km ?? 3),
           min_fee: d.min_fee?.toString() ?? "",
           max_km: d.max_km?.toString() ?? "",
@@ -90,6 +94,8 @@ export default function SettingsPage() {
     const rows = [
       { key: "whatsapp", value: digits.startsWith("+") ? digits : `+591${digits.replace(/^591/, "")}` },
       { key: "instagram_url", value: s.instagram_url.trim() || null },
+      { key: "facebook_url", value: s.facebook_url.trim() || null },
+      { key: "tiktok_url", value: s.tiktok_url.trim() || null },
       {
         key: "delivery",
         value: {
@@ -125,6 +131,12 @@ export default function SettingsPage() {
             </Field>
             <Field label="Instagram (enlace)" hint="ej. https://instagram.com/tu_cuenta — aparece en el pie y en la sección de Instagram">
               <Input value={s.instagram_url} onChange={(e) => set("instagram_url", e.target.value)} placeholder="https://instagram.com/…" />
+            </Field>
+            <Field label="Facebook (enlace)" hint="Aparece en el pie de página">
+              <Input value={s.facebook_url} onChange={(e) => set("facebook_url", e.target.value)} placeholder="https://facebook.com/…" />
+            </Field>
+            <Field label="TikTok (enlace)" hint="Aparece en el pie de página">
+              <Input value={s.tiktok_url} onChange={(e) => set("tiktok_url", e.target.value)} placeholder="https://tiktok.com/@…" />
             </Field>
           </div>
         </Panel>

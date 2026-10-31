@@ -1,5 +1,5 @@
 /**
- * Bakes the procedural Wagus steer into public/models/wagus.bin so the browser skips the ~5 s meshing.
+ * Bakes the procedural Wangus steer into public/models/wagus.bin so the browser skips the ~5 s meshing.
  * Run with `npm run bake:cow` after changing src/components/cow3d/sculpt.ts.
  * Layout: u32 vertexCount, u32 indexCount, f32[v*3] positions, i8[v*3] normals (padded to 4), u16|u32[i] indices.
  */

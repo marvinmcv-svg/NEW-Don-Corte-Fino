@@ -77,6 +77,8 @@ export type Settings = {
   slots: string[];
   announcement: { active: boolean; es: string; en: string };
   instagram_url: string | null;
+  facebook_url: string | null;
+  tiktok_url: string | null;
 };
 
 export type Catalog = {
@@ -108,6 +110,8 @@ export const seedCatalog: Catalog = {
     slots: DEFAULT_SLOTS,
     announcement: { active: false, es: "", en: "" },
     instagram_url: null,
+    facebook_url: null,
+    tiktok_url: null,
   },
   fromSeed: true,
 };

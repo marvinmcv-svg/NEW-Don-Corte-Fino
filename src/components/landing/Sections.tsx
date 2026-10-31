@@ -233,7 +233,7 @@ export function MarblingSection({ d }: { d: Dict }) {
             )}
           </div>
           <div className="mt-5 flex items-baseline gap-4 border-t border-champagne/15 pt-5">
-            <span className="h-display shrink-0 whitespace-nowrap text-3xl text-champagne md:text-4xl">= Wagus</span>
+            <span className="h-display shrink-0 whitespace-nowrap text-3xl text-champagne md:text-4xl">= Wangus</span>
             <p className="text-[0.8rem] leading-snug text-steel md:text-sm">
               <span className="text-bone">{d.wagyu.cross}:</span> {d.wagyu.crossBody}
             </p>
@@ -298,7 +298,7 @@ export function OriginSection({ d }: { d: Dict }) {
           <path d="M960 70 L 1000 66" stroke="#D6C5A7" strokeOpacity=".4" strokeDasharray="4 6" />
           {[
             { x: 40, y: 110, label: o.from, sub: "17.8° S · 63.2° W", main: false, anchor: "start" as const },
-            { x: 520, y: 80, label: o.farm, sub: "Wagus", main: true, anchor: "middle" as const },
+            { x: 520, y: 80, label: o.farm, sub: "Wangus", main: true, anchor: "middle" as const },
             { x: 960, y: 70, label: o.to, sub: "→", main: false, anchor: "end" as const },
           ].map((p) => (
             <g key={p.label}>

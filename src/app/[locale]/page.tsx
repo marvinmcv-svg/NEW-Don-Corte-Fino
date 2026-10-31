@@ -1,14 +1,15 @@
 import Link from "next/link";
 import BoxCard from "@/components/BoxCard";
 import Cow3D from "@/components/cow3d/Cow3D";
+import DeliveryMap from "@/components/DeliveryMap";
 import ProductCard from "@/components/ProductCard";
 import { FireSection, HeroSection, HorizontalCuts, InstaStrip, ManifestoSection, MarblingSection, OriginSection, ProcessSection } from "@/components/landing/Sections";
 import Magnetic from "@/components/motion/Magnetic";
-import { RevealImage, SplitHeading, Stagger } from "@/components/motion/primitives";
+import { SplitHeading, Stagger } from "@/components/motion/primitives";
 import { cutProductsOf, visibleProducts, type Locale } from "@/lib/catalog";
 import { getCatalog } from "@/lib/catalog-server";
 import { getDict } from "@/lib/i18n";
-import { productPhoto, SCENES } from "@/lib/media";
+import { productPhoto } from "@/lib/media";
 import { displayPhone, waLink } from "@/lib/order";
 
 function Head({ kicker, title, className = "" }: { kicker: string; title: string; className?: string }) {
@@ -111,7 +112,7 @@ export default async function Home({ params }: { params: Promise<{ locale: Local
               </Magnetic>
             </div>
           </div>
-          <RevealImage src={SCENES.tomahawkTall.src} alt="Tomahawk Wagus" width={SCENES.tomahawkTall.w} height={SCENES.tomahawkTall.h} className="aspect-[3/4]" sizes="(min-width:1024px) 40vw, 100vw" />
+          <DeliveryMap locale={locale} origin={settings.delivery.origin} label={d.delivery.mapLabel} open={d.delivery.openMap} />
         </div>
       </section>
     </>

@@ -4,7 +4,7 @@ export const LOCALES: Locale[] = ["es", "en"];
 export const isLocale = (v: string): v is Locale => (LOCALES as string[]).includes(v);
 
 const es = {
-  fire: { line1: "¿Comer", line2: "o disfrutar?", sub: "Fuego, sal y un corte Wagus. No hace falta nada más." },
+  fire: { line1: "¿Comer", line2: "o disfrutar?", sub: "Fuego, sal y un corte Wangus. No hace falta nada más." },
   ig: { kicker: "Instagram", title: "Lo que se cocina en casa", cta: "Escríbenos" },
   scrollHint: "Desliza para descubrir",
   marbling: "Marmoleo",
@@ -12,17 +12,17 @@ const es = {
   hero: {
     kicker: "Wagyu × Angus · Santa Cruz, Bolivia",
     title1: "No es solo carne…",
-    title2: "es Wagus.",
+    title2: "es Wangus.",
     ctaCuts: "Ver cortes",
     scroll: "Desliza",
   },
   manifesto:
-    "Wagyu por la ternura. Angus por el carácter. Terminados a corral en Santa Cruz, camino a Brasil, nuestros novillos Wagus llegan al mostrador con un marmoleo que no se improvisa: se cría.",
-  manifestoKeys: ["Wagyu", "Angus", "Santa", "Cruz,", "Brasil,", "Wagus"],
+    "Wagyu por la ternura. Angus por el carácter. Terminados a corral en Santa Cruz, camino a Brasil, nuestros novillos Wangus llegan al mostrador con un marmoleo que no se improvisa: se cría.",
+  manifestoKeys: ["Wagyu", "Angus", "Santa", "Cruz,", "Brasil,", "Wangus"],
   wagyu: {
-    kicker: "Wagyu × Angus = Wagus",
+    kicker: "Wagyu × Angus = Wangus",
     title: "Dos razas. Un solo corte.",
-    body: "No vendemos Wagyu puro, y lo decimos con orgullo. Wagus es el cruce que toma lo mejor de cada sangre: la grasa fina que se funde del Wagyu y la carne profunda y generosa del Angus.",
+    body: "No vendemos Wagyu puro, y lo decimos con orgullo. Wangus es el cruce que toma lo mejor de cada sangre: la grasa fina que se funde del Wagyu y la carne profunda y generosa del Angus.",
     wagyuGives: ["Marmoleo fino", "Textura de manteca", "Grasa que se funde"],
     angusGives: ["Sabor a carne intenso", "Cortes generosos", "Mordida firme"],
     cross: "El resultado",
@@ -39,7 +39,7 @@ const es = {
   origin: {
     kicker: "Origen",
     title: "Criado en Santa Cruz. Camino a Brasil.",
-    body: "Nuestro Wagus se termina en confinamiento — engorde a corral — sobre la ruta que une Santa Cruz de la Sierra con la frontera brasileña. Dieta controlada, agua, sombra y calma, todos los días. Así el marmoleo se forma con paciencia, no por suerte.",
+    body: "Nuestro Wangus se termina en confinamiento — engorde a corral — sobre la ruta que une Santa Cruz de la Sierra con la frontera brasileña. Dieta controlada, agua, sombra y calma, todos los días. Así el marmoleo se forma con paciencia, no por suerte.",
     points: [
       { t: "Genética", d: "Wagyu × Angus: la ternura japonesa con la fuerza del Angus." },
       { t: "Engorde a corral", d: "Terminación en confinamiento con dieta controlada, día a día." },
@@ -51,7 +51,7 @@ const es = {
   },
   map: {
     kicker: "Guía de cortes 3D",
-    title: "Conoce al Wagus, corte por corte",
+    title: "Conoce al Wangus, corte por corte",
     hint: "Gira la res y toca una zona",
     drag: "Arrastra para girar",
     noCuts: "Esta zona no está en nuestra selección",
@@ -62,7 +62,7 @@ const es = {
     kicker: "La experiencia",
     title: "Del mostrador a tu parrilla",
     steps: [
-      { t: "Selección", d: "Del corral a nuestras manos: elegimos cada pieza Wagus por su marmoleo y color." },
+      { t: "Selección", d: "Del corral a nuestras manos: elegimos cada pieza Wangus por su marmoleo y color." },
       { t: "Maduración", d: "Reposo en frío controlado para concentrar el sabor." },
       { t: "Corte a mano", d: "Porcionamos al grosor que pides: 2, 3 o 4 cm." },
       { t: "Al vacío", d: "Sellado individual para conservar frescura y jugos." },
@@ -100,9 +100,11 @@ const es = {
     body: "Bs 3 por km desde nuestra tienda, redondeado al km siguiente. Retiro en tienda sin costo. Coordinamos día y horario por WhatsApp.",
     orders: "Pedidos",
     example: "Ejemplo: 7.3 km → 8 km → Bs 24",
+    mapLabel: "Zona de entrega",
+    openMap: "Abrir en Google Maps",
   },
   footer: {
-    tagline: "Carnicería Wagus Premium · Wagyu × Angus",
+    tagline: "Carnicería Wangus Premium · Wagyu × Angus",
     hours: "Pedidos por WhatsApp",
     follow: "Síguenos",
     rights: "Todos los derechos reservados.",
@@ -131,7 +133,7 @@ const es = {
     sides: "Guarniciones",
     sauces: "Salsas",
     related: "También te puede gustar",
-    breed: "Wagus · Wagyu × Angus",
+    breed: "Wangus · Wagyu × Angus",
   },
   buy: {
     grade: "Grado de marmoleo",
@@ -219,7 +221,7 @@ const es = {
 export type Dict = typeof es;
 
 const en: Dict = {
-  fire: { line1: "Just eat,", line2: "or truly enjoy?", sub: "Fire, salt and a Wagus cut. Nothing else needed." },
+  fire: { line1: "Just eat,", line2: "or truly enjoy?", sub: "Fire, salt and a Wangus cut. Nothing else needed." },
   ig: { kicker: "Instagram", title: "What's cooking at home", cta: "Message us" },
   scrollHint: "Scroll to discover",
   marbling: "Marbling",
@@ -227,17 +229,17 @@ const en: Dict = {
   hero: {
     kicker: "Wagyu × Angus · Santa Cruz, Bolivia",
     title1: "It's not just beef…",
-    title2: "it's Wagus.",
+    title2: "it's Wangus.",
     ctaCuts: "Explore cuts",
     scroll: "Scroll",
   },
   manifesto:
-    "Wagyu for tenderness. Angus for character. Finished in our Santa Cruz feedlot, on the road to Brazil, every Wagus steer reaches our counter with marbling you can't fake — you have to raise it.",
-  manifestoKeys: ["Wagyu", "Angus", "Santa", "Cruz", "Brazil,", "Wagus"],
+    "Wagyu for tenderness. Angus for character. Finished in our Santa Cruz feedlot, on the road to Brazil, every Wangus steer reaches our counter with marbling you can't fake — you have to raise it.",
+  manifestoKeys: ["Wagyu", "Angus", "Santa", "Cruz", "Brazil,", "Wangus"],
   wagyu: {
-    kicker: "Wagyu × Angus = Wagus",
+    kicker: "Wagyu × Angus = Wangus",
     title: "Two breeds. One cut.",
-    body: "We don't sell full-blood Wagyu — and we say it proudly. Wagus is the cross that takes the best of both bloodlines: Wagyu's fine, melting fat and Angus's deep, generous beef.",
+    body: "We don't sell full-blood Wagyu — and we say it proudly. Wangus is the cross that takes the best of both bloodlines: Wagyu's fine, melting fat and Angus's deep, generous beef.",
     wagyuGives: ["Fine marbling", "Buttery texture", "Fat that melts"],
     angusGives: ["Bold beef flavour", "Generous cuts", "Satisfying bite"],
     cross: "The result",
@@ -254,7 +256,7 @@ const en: Dict = {
   origin: {
     kicker: "Origin",
     title: "Raised in Santa Cruz. On the road to Brazil.",
-    body: "Our Wagus is finished in confinement — a feedlot — along the route that links Santa Cruz de la Sierra to the Brazilian border. Controlled diet, water, shade and calm, every single day. That's how marbling is built: with patience, not luck.",
+    body: "Our Wangus is finished in confinement — a feedlot — along the route that links Santa Cruz de la Sierra to the Brazilian border. Controlled diet, water, shade and calm, every single day. That's how marbling is built: with patience, not luck.",
     points: [
       { t: "Genetics", d: "Wagyu × Angus: Japanese tenderness with Angus muscle." },
       { t: "Feedlot-finished", d: "Finished in confinement on a controlled diet, day after day." },
@@ -266,7 +268,7 @@ const en: Dict = {
   },
   map: {
     kicker: "3D cut guide",
-    title: "Meet the Wagus, cut by cut",
+    title: "Meet the Wangus, cut by cut",
     hint: "Spin the steer and tap a zone",
     drag: "Drag to rotate",
     noCuts: "This area isn't part of our selection",
@@ -277,7 +279,7 @@ const en: Dict = {
     kicker: "The experience",
     title: "From our counter to your grill",
     steps: [
-      { t: "Selection", d: "From feedlot to our hands: every Wagus piece is chosen for marbling and colour." },
+      { t: "Selection", d: "From feedlot to our hands: every Wangus piece is chosen for marbling and colour." },
       { t: "Ageing", d: "Controlled cold rest to concentrate flavour." },
       { t: "Hand-cut", d: "Portioned to the thickness you ask for: 2, 3 or 4 cm." },
       { t: "Vacuum-sealed", d: "Individually sealed to lock in freshness and juices." },
@@ -315,9 +317,11 @@ const en: Dict = {
     body: "Bs 3 per km from our store, rounded up to the next km. Free pickup in store. We arrange day and time on WhatsApp.",
     orders: "Orders",
     example: "Example: 7.3 km → 8 km → Bs 24",
+    mapLabel: "Delivery area",
+    openMap: "Open in Google Maps",
   },
   footer: {
-    tagline: "Premium Wagus Butchery · Wagyu × Angus",
+    tagline: "Premium Wangus Butchery · Wagyu × Angus",
     hours: "Orders via WhatsApp",
     follow: "Follow us",
     rights: "All rights reserved.",
@@ -346,7 +350,7 @@ const en: Dict = {
     sides: "Sides",
     sauces: "Sauces",
     related: "You may also like",
-    breed: "Wagus · Wagyu × Angus",
+    breed: "Wangus · Wagyu × Angus",
   },
   buy: {
     grade: "Marbling grade",

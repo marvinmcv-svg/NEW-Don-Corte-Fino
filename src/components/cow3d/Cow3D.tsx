@@ -116,7 +116,7 @@ void main() {
   vec3 hide = vec3(0.05, 0.045, 0.047) * (0.8 + 0.4 * grain);
   vec3 col = hide * dif * 2.4 + spec * vec3(0.32, 0.3, 0.28) + fres * gold * 0.28;
 
-  // Marbled Wagus underneath
+  // Marbled Wangus underneath
   bool inSel = z > 0.5 && abs(z - uSel) < 0.5;
   bool inHov = z > 0.5 && abs(z - uHover) < 0.5;
   float reveal = max(inSel ? uSelAmt : 0.0, inHov ? uHoverAmt * 0.6 : 0.0);

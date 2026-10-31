@@ -11,6 +11,7 @@ export default function Login() {
   const [mode, setMode] = useState<"in" | "up" | "reset">("in");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
+  const [show, setShow] = useState(false);
   const [msg, setMsg] = useState<{ text: string; ok?: boolean }>();
   const [busy, setBusy] = useState(false);
 
@@ -20,8 +21,16 @@ export default function Login() {
     setMsg(undefined);
     const db = supabaseBrowser();
     if (mode === "in") {
-      const { error } = await db.auth.signInWithPassword({ email, password });
-      if (error) setMsg({ text: error.message === "Invalid login credentials" ? "Correo o contraseña incorrectos." : error.message });
+      // Staff can sign in with their username (e.g. DonCorteFino) or their email.
+      let login = email.trim();
+      if (!login.includes("@")) {
+        const { data } = await db.rpc("login_email", { p_username: login });
+        login = typeof data === "string" ? data : "";
+      }
+      const { error } = login
+        ? await db.auth.signInWithPassword({ email: login, password })
+        : { error: { message: "Invalid login credentials" } };
+      if (error) setMsg({ text: error.message === "Invalid login credentials" ? "Usuario o contraseña incorrectos." : error.message });
       else {
         router.replace("/admin");
         router.refresh();
@@ -45,12 +54,44 @@ export default function Login() {
           <p className="mt-1 text-xs uppercase tracking-[0.3em] text-champagne">Panel de administración</p>
         </div>
         <div className="space-y-4">
-          <Field label="Correo">
-            <Input type="email" required value={email} onChange={(e) => setEmail(e.target.value)} autoComplete="email" />
+          <Field label={mode === "in" ? "Usuario o correo" : "Correo"}>
+            <Input
+              type={mode === "in" ? "text" : "email"}
+              required
+              value={email}
+              onChange={(e) => setEmail(e.target.value)}
+              autoComplete={mode === "in" ? "username" : "email"}
+              autoCapitalize="none"
+              spellCheck={false}
+            />
           </Field>
           {mode !== "reset" && (
             <Field label="Contraseña" hint={mode === "up" ? "Mínimo 8 caracteres." : undefined}>
-              <Input type="password" required minLength={mode === "up" ? 8 : 1} value={password} onChange={(e) => setPassword(e.target.value)} autoComplete={mode === "up" ? "new-password" : "current-password"} />
+              <div className="relative">
+                <Input
+                  type={show ? "text" : "password"}
+                  required
+                  minLength={mode === "up" ? 8 : 1}
+                  value={password}
+                  onChange={(e) => setPassword(e.target.value)}
+                  autoComplete={mode === "up" ? "new-password" : "current-password"}
+                  className="pr-11"
+                />
+                <button
+                  type="button"
+                  onClick={() => setShow((v) => !v)}
+                  aria-label={show ? "Ocultar contraseña" : "Mostrar contraseña"}
+                  aria-pressed={show}
+                  title={show ? "Ocultar contraseña" : "Mostrar contraseña"}
+                  className="absolute inset-y-0 right-0 flex w-11 items-center justify-center text-ash transition hover:text-champagne"
+                >
+                  <svg viewBox="0 0 24 24" className="h-5 w-5" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" aria-hidden="true">
+                    <path d="M2 12s3.6-7 10-7 10 7 10 7-3.6 7-10 7S2 12 2 12z" />
+                    <circle cx="12" cy="12" r="3" />
+                    {show && <path d="M4 4l16 16" />}
+                  </svg>
+                </button>
+              </div>
             </Field>
           )}
           {msg && <p className={`text-sm ${msg.ok ? "text-emerald-300" : "text-red-300"}`}>{msg.text}</p>}

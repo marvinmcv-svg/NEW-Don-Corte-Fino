@@ -1,6 +1,6 @@
 /**
- * Procedural Wagus steer: a signed-distance sculpt (smooth-unioned ellipsoids and tapered capsules)
- * meshed with naive surface nets, then relaxed onto the surface. Polled, like Angus and most Wagus.
+ * Procedural Wangus steer: a signed-distance sculpt (smooth-unioned ellipsoids and tapered capsules)
+ * meshed with naive surface nets, then relaxed onto the surface. Polled, like Angus and most Wangus.
  * Object space: head toward −x, ground at y = 0, +z faces the default camera.
  */
 

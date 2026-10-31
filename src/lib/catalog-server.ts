@@ -51,6 +51,8 @@ async function load(): Promise<Catalog> {
       slots: Array.isArray(kv.slots) && kv.slots.length ? kv.slots : DEFAULT_SLOTS,
       announcement: kv.announcement ?? seedCatalog.settings.announcement,
       instagram_url: kv.instagram_url ?? null,
+      facebook_url: kv.facebook_url ?? null,
+      tiktok_url: kv.tiktok_url ?? null,
     };
     return { products, offers, settings, fromSeed: false };
   } catch (e) {

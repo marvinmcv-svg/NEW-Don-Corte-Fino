@@ -108,6 +108,6 @@ The three variants:
 The "Del mostrador a tu parrilla" section uses designed panels for steps 4 and 5 until real photos exist.
 Shoot these or generate them, export at about 1600×2000 WebP, then wire them into `processPanels()` in `src/components/landing/Sections.tsx`.
 
-1. **Selección: butcher showing the cuts.** A Don Corte Fino butcher in a dark apron, facing camera, holding up a thick marbled Wagus ribeye in each hand over a wooden block with more cuts laid out. Low-key lighting, burgundy and charcoal tones, shallow depth of field.
-2. **Al vacío: vacuum-sealed cuts.** Three Wagus steaks in glossy vacuum pouches with the Don Corte Fino label, stacked on black slate. Rim light shows the film wrinkles, with marbling visible through the plastic. Macro, 85mm.
+1. **Selección: butcher showing the cuts.** A Don Corte Fino butcher in a dark apron, facing camera, holding up a thick marbled Wangus ribeye in each hand over a wooden block with more cuts laid out. Low-key lighting, burgundy and charcoal tones, shallow depth of field.
+2. **Al vacío: vacuum-sealed cuts.** Three Wangus steaks in glossy vacuum pouches with the Don Corte Fino label, stacked on black slate. Rim light shows the film wrinkles, with marbling visible through the plastic. Macro, 85mm.
 3. **Entrega: cold-chain delivery.** A matte-black insulated delivery box with the Don Corte Fino mark, lid open, vacuum-packed cuts on ice packs inside. A doorstep at dusk in Santa Cruz, with warm porch light and a hand receiving the box.

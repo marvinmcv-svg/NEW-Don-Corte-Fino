@@ -60,7 +60,7 @@ export default function Preloader() {
             </span>
           ))}
         </div>
-        <p className="mt-3 text-[0.6rem] uppercase tracking-[0.5em] text-champagne">Wagus · Wagyu × Angus</p>
+        <p className="mt-3 text-[0.6rem] uppercase tracking-[0.5em] text-champagne">Wangus · Wagyu × Angus</p>
       </div>
       <span data-count className="absolute bottom-8 right-8 font-display text-6xl text-bone/20 md:text-8xl">
         000

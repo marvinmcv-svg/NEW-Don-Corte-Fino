@@ -10,6 +10,7 @@
     "bake:cow": "npx -y tsx scripts/bake-cow.ts"
   },
   "dependencies": {
+    "@anthropic-ai/sdk": "^1.3.0",
     "@gsap/react": "^2.1.2",
     "@supabase/ssr": "^0.6.1",
     "@supabase/supabase-js": "^2.49.4",

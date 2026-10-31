@@ -32,7 +32,7 @@ export function VacuumVisual() {
           {/* label */}
           <div className="absolute bottom-[8%] left-1/2 w-[70%] -translate-x-1/2 border border-champagne/50 bg-noir/85 px-4 py-3 text-center backdrop-blur-sm">
             <p className="font-display text-[0.65rem] tracking-[0.35em] text-champagne">DON CORTE FINO</p>
-            <p className="mt-1 font-display text-sm tracking-[0.12em] text-bone">WAGUS · BIFE ANGOSTO</p>
+            <p className="mt-1 font-display text-sm tracking-[0.12em] text-bone">WANGUS · BIFE ANGOSTO</p>
             <div className="mx-auto mt-2 h-4 w-[80%] bg-[repeating-linear-gradient(90deg,#E8E2D6_0_1px,transparent_1px_3px,#E8E2D6_3px_5px,transparent_5px_6px)] opacity-70" />
           </div>
         </div>
