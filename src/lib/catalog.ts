@@ -51,6 +51,8 @@ export type LaunchOffer = {
   launch_price?: number;
   limit?: { units?: number; numbered?: boolean; uses?: number } | null;
   includes_extra?: L10n;
+  /** How many people the box feeds, e.g. "4–6 personas". */
+  serves?: L10n;
   code?: string;
   discount?: { kind: "percent" | "fixed"; value: number };
   min_subtotal?: number;

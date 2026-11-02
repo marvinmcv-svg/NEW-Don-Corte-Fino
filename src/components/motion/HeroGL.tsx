@@ -14,8 +14,11 @@ void main() {
 const frag = /* glsl */ `
 precision highp float;
 uniform sampler2D uTex;
+uniform sampler2D uTex2;
 uniform vec2 uRes;
 uniform vec2 uImg;
+uniform vec2 uImg2;
+uniform float uProg;
 uniform vec2 uMouse;
 uniform float uTime;
 uniform float uVel;
@@ -47,9 +50,9 @@ float snoise(vec2 v) {
   return 130.0 * dot(m, g);
 }
 
-vec2 cover(vec2 uv) {
+vec2 cover(vec2 uv, vec2 img) {
   float rs = uRes.x / uRes.y;
-  float ri = uImg.x / uImg.y;
+  float ri = img.x / img.y;
   vec2 scale = rs < ri ? vec2(rs / ri, 1.0) : vec2(1.0, ri / rs);
   return (uv - 0.5) * scale + 0.5;
 }
@@ -73,23 +76,32 @@ void main() {
   // Zoom in on intro, push in on scroll
   float zoom = 1.0 - 0.12 * uScroll + 0.18 * (1.0 - uIntro);
   vec2 uv = (st - 0.5) * zoom + 0.5 + drift + ripple + bulge / aspect;
-  uv = cover(uv);
 
-  // RGB split grows with pointer speed and scroll
-  float split = 0.002 + 0.012 * uVel + 0.01 * uScroll;
+  // Slide change: a noisy liquid wipe sweeps across, each image smeared along the flow as it passes.
+  float wn = snoise(st * 3.0 + uTime * 0.15) * 0.18 + snoise(st * 9.0) * 0.04;
+  float wedge = st.x * 0.85 + (1.0 - st.y) * 0.15 + wn;
+  float m = smoothstep(uProg * 1.5 - 0.25, uProg * 1.5 - 0.05, wedge);
+  m = 1.0 - m; // 1 where the next slide has arrived
+  float band = smoothstep(0.5, 0.0, abs(m - 0.5)) * step(0.001, uProg) * step(uProg, 0.999);
+  vec2 flow = vec2(1.0, -0.25) * band * 0.06;
+  vec2 uvA = cover(uv - flow * 1.0 + vec2(-0.04, 0.0) * uProg, uImg);
+  vec2 uvB = cover(uv + flow * 1.6 + vec2(0.04, 0.0) * (1.0 - uProg), uImg2);
+
+  // RGB split grows with pointer speed, scroll and while slides change
+  float split = 0.002 + 0.012 * uVel + 0.01 * uScroll + band * 0.015;
   vec2 dir = normalize(toM + 1e-5) / aspect;
-  float r = texture2D(uTex, uv + dir * split).r;
-  float g = texture2D(uTex, uv).g;
-  float b = texture2D(uTex, uv - dir * split).b;
-  vec3 col = vec3(r, g, b);
+  vec3 cA = vec3(texture2D(uTex, uvA + dir * split).r, texture2D(uTex, uvA).g, texture2D(uTex, uvA - dir * split).b);
+  vec3 cB = vec3(texture2D(uTex2, uvB + dir * split).r, texture2D(uTex2, uvB).g, texture2D(uTex2, uvB - dir * split).b);
+  vec3 col = mix(cA, cB, m);
+  col += vec3(0.84, 0.77, 0.65) * band * 0.18;
 
   // Grade: darken, push shadows to burgundy, vignette
   float lum = dot(col, vec3(0.299, 0.587, 0.114));
-  col = mix(col, col * vec3(1.08, 0.86, 0.88), 0.35);
-  col = mix(vec3(0.38, 0.13, 0.18) * lum * 1.4, col, smoothstep(0.0, 0.55, lum));
+  col = mix(col, col * vec3(1.06, 0.97, 0.92), 0.2);
+  col = mix(vec3(0.38, 0.13, 0.18) * lum * 1.4, col, smoothstep(0.0, 0.22, lum));
   float vig = smoothstep(1.25, 0.25, length((st - vec2(0.55, 0.5)) * vec2(1.25, 1.0)));
-  col *= mix(0.25, 1.0, vig);
-  col *= 0.78 - 0.35 * uScroll;
+  col *= mix(0.72, 1.0, vig);
+  col *= 1.0 - 0.4 * uScroll;
 
   // Intro: burgundy veil peels away along a noisy diagonal edge
   float edge = st.x * 0.6 + (1.0 - st.y) * 0.4 + snoise(st * 4.0 + uTime * 0.2) * 0.08;
@@ -99,8 +111,16 @@ void main() {
   gl_FragColor = vec4(col, 1.0);
 }`;
 
-export default function HeroGL({ src, fallback, className = "" }: { src: string; fallback: string; className?: string }) {
+type Api = { show: (i: number) => void };
+
+/**
+ * Full-bleed WebGL hero. Takes a list of slides and liquid-wipes between them whenever `index` changes.
+ * Falls back to cross-fading <img> layers without WebGL or with reduced motion.
+ */
+export default function HeroGL({ slides, index = 0, className = "" }: { slides: string[]; index?: number; className?: string }) {
   const wrap = useRef<HTMLDivElement>(null);
+  const api = useRef<Api | null>(null);
+  const shown = useRef(index);
 
   useEffect(() => {
     const el = wrap.current;
@@ -120,8 +140,11 @@ export default function HeroGL({ src, fallback, className = "" }: { src: string;
     const camera = new THREE.OrthographicCamera(-1, 1, 1, -1, 0, 1);
     const uniforms = {
       uTex: { value: null as THREE.Texture | null },
+      uTex2: { value: null as THREE.Texture | null },
       uRes: { value: new THREE.Vector2(1, 1) },
       uImg: { value: new THREE.Vector2(1600, 1067) },
+      uImg2: { value: new THREE.Vector2(1600, 1067) },
+      uProg: { value: 0 },
       uMouse: { value: new THREE.Vector2(0.62, 0.45) },
       uTime: { value: 0 },
       uVel: { value: 0 },
@@ -131,16 +154,63 @@ export default function HeroGL({ src, fallback, className = "" }: { src: string;
     const mesh = new THREE.Mesh(new THREE.PlaneGeometry(2, 2), new THREE.ShaderMaterial({ vertexShader: vert, fragmentShader: frag, uniforms }));
     scene.add(mesh);
 
-    new THREE.TextureLoader().load(src, (tex) => {
-      tex.colorSpace = THREE.SRGBColorSpace;
-      tex.minFilter = THREE.LinearFilter;
-      uniforms.uTex.value = tex;
-      uniforms.uImg.value.set(tex.image.width, tex.image.height);
-      el.dataset.ready = "1";
-      const start = () => gsap.to(uniforms.uIntro, { value: 1, duration: 2.6, ease: "power3.inOut" });
-      if ((window as unknown as { __dcfLoaded?: boolean }).__dcfLoaded) start();
-      else window.addEventListener(LOADED_EVENT, start, { once: true });
-    });
+    // Load every slide; the first one gates the intro, the rest stream in behind it.
+    const loader = new THREE.TextureLoader();
+    const texs: (THREE.Texture | null)[] = slides.map(() => null);
+    let current = shown.current;
+    let pending: number | null = null;
+    const size = (t: THREE.Texture) => new THREE.Vector2(t.image.width, t.image.height);
+    const show = (i: number) => {
+      if (i === current) return;
+      const next = texs[i];
+      if (!next || !uniforms.uTex.value) {
+        pending = i;
+        return;
+      }
+      gsap.killTweensOf(uniforms.uProg);
+      // if a wipe is mid-flight, settle on what's arriving first
+      if (uniforms.uProg.value > 0 && uniforms.uTex2.value) {
+        uniforms.uTex.value = uniforms.uTex2.value;
+        uniforms.uImg.value.copy(uniforms.uImg2.value);
+      }
+      uniforms.uTex2.value = next;
+      uniforms.uImg2.value.copy(size(next));
+      uniforms.uProg.value = 0;
+      current = i;
+      gsap.to(uniforms.uProg, {
+        value: 1,
+        duration: 1.6,
+        ease: "power2.inOut",
+        onComplete: () => {
+          uniforms.uTex.value = next;
+          uniforms.uImg.value.copy(size(next));
+          uniforms.uProg.value = 0;
+        },
+      });
+    };
+    api.current = { show };
+    slides.forEach((src, i) =>
+      loader.load(src, (tex) => {
+        tex.colorSpace = THREE.SRGBColorSpace;
+        tex.minFilter = THREE.LinearFilter;
+        tex.generateMipmaps = false;
+        texs[i] = tex;
+        if (i === current && !uniforms.uTex.value) {
+          uniforms.uTex.value = tex;
+          uniforms.uTex2.value = tex;
+          uniforms.uImg.value.copy(size(tex));
+          el.dataset.ready = "1";
+          const start = () => gsap.to(uniforms.uIntro, { value: 1, duration: 2.6, ease: "power3.inOut" });
+          if ((window as unknown as { __dcfLoaded?: boolean }).__dcfLoaded) start();
+          else window.addEventListener(LOADED_EVENT, start, { once: true });
+        }
+        if (pending !== null && texs[pending]) {
+          const p = pending;
+          pending = null;
+          show(p);
+        }
+      }),
+    );
 
     const resize = () => {
       const { width, height } = el.getBoundingClientRect();
@@ -192,19 +262,36 @@ export default function HeroGL({ src, fallback, className = "" }: { src: string;
       ro.disconnect();
       io.disconnect();
       st.kill();
-      uniforms.uTex.value?.dispose();
+      api.current = null;
+      gsap.killTweensOf(uniforms.uProg);
+      gsap.killTweensOf(uniforms.uIntro);
+      texs.forEach((t) => t?.dispose());
       mesh.geometry.dispose();
       (mesh.material as THREE.Material).dispose();
       renderer.dispose();
       renderer.domElement.remove();
     };
-  }, [src]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [slides.join("|")]);
+
+  useEffect(() => {
+    shown.current = index;
+    api.current?.show(index);
+  }, [index]);
 
   return (
     <div ref={wrap} className={`group/gl ${className}`}>
       {/* Static fallback for no-WebGL / reduced motion; hidden once the canvas has its texture */}
-      {/* eslint-disable-next-line @next/next/no-img-element */}
-      <img src={fallback} alt="" className="absolute inset-0 h-full w-full object-cover opacity-60 transition-opacity duration-700 [[data-ready]_&]:opacity-0" />
+      {slides.map((src, i) => (
+        // eslint-disable-next-line @next/next/no-img-element
+        <img
+          key={src}
+          src={src}
+          alt=""
+          loading={i === 0 ? "eager" : "lazy"}
+          className={`absolute inset-0 h-full w-full object-cover transition-opacity duration-1000 [[data-ready]_&]:!opacity-0 ${i === index ? "opacity-90" : "opacity-0"}`}
+        />
+      ))}
     </div>
   );
 }
