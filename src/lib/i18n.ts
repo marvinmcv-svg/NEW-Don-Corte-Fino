@@ -48,6 +48,14 @@ const es = {
     from: "Santa Cruz de la Sierra",
     farm: "Nuestro corral",
     to: "Brasil",
+    route: "Ruta 4 · Corredor bioceánico",
+    border: "Puerto Quijarro",
+    borderSub: "Frontera con Brasil",
+    stats: [
+      { pre: "≈", n: 640, suf: " km", l: "de Santa Cruz a la frontera con Brasil" },
+      { pre: "BMS ", n: 4, suf: "–7", l: "marmoleo que buscamos en cada novillo" },
+      { pre: "", n: 100, suf: "%", l: "terminado a corral, con dieta controlada" },
+    ],
   },
   map: {
     kicker: "Guía de cortes 3D",
@@ -56,6 +64,8 @@ const es = {
     drag: "Arrastra para girar",
     noCuts: "Esta zona no está en nuestra selección",
     see: "Ver guía",
+    pickCut: "Toca un corte para verlo en la res",
+    show3d: "Ver en 3D",
   },
   signature: { kicker: "Selección de la casa", title: "Cortes insignia", all: "Ver todos los cortes" },
   process: {
@@ -265,6 +275,14 @@ const en: Dict = {
     from: "Santa Cruz de la Sierra",
     farm: "Our feedlot",
     to: "Brazil",
+    route: "Route 4 · Bioceanic corridor",
+    border: "Puerto Quijarro",
+    borderSub: "Brazil border",
+    stats: [
+      { pre: "≈", n: 640, suf: " km", l: "from Santa Cruz to the Brazilian border" },
+      { pre: "BMS ", n: 4, suf: "–7", l: "the marbling we aim for in every steer" },
+      { pre: "", n: 100, suf: "%", l: "feedlot-finished on a controlled diet" },
+    ],
   },
   map: {
     kicker: "3D cut guide",
@@ -273,6 +291,8 @@ const en: Dict = {
     drag: "Drag to rotate",
     noCuts: "This area isn't part of our selection",
     see: "View guide",
+    pickCut: "Tap a cut to see it on the steer",
+    show3d: "Show in 3D",
   },
   signature: { kicker: "House selection", title: "Signature cuts", all: "See every cut" },
   process: {
