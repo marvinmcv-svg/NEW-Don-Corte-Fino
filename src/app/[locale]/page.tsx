@@ -2,6 +2,7 @@ import Link from "next/link";
 import BoxCard from "@/components/BoxCard";
 import Cow3D from "@/components/cow3d/Cow3D";
 import DeliveryMap from "@/components/DeliveryMap";
+import InquiryFunnel from "@/components/InquiryFunnel";
 import ProductCard from "@/components/ProductCard";
 import { FireSection, HeroSection, HorizontalCuts, InstaStrip, ManifestoSection, MarblingSection, OriginSection, ProcessSection } from "@/components/landing/Sections";
 import Magnetic from "@/components/motion/Magnetic";
@@ -82,8 +83,11 @@ export default async function Home({ params }: { params: Promise<{ locale: Local
       {/* Boxes */}
       <section id="cajas" className="scroll-mt-20 bg-noir px-4 py-28 md:px-10 md:py-40">
         <div className="mx-auto max-w-[1500px]">
-          <Head kicker={d.boxes.kicker} title={d.boxes.title} />
-          <Stagger className="grid gap-6 lg:grid-cols-2">
+          <div className="mb-14 grid gap-6 md:mb-20 lg:grid-cols-[1.2fr_1fr] lg:items-end">
+            <Head kicker={d.boxes.kicker} title={d.boxes.title} className="!mb-0" />
+            <p className="max-w-xl font-serif text-xl leading-relaxed text-steel md:text-2xl">{d.boxes.sub}</p>
+          </div>
+          <Stagger className="grid gap-6 md:grid-cols-2 xl:grid-cols-3">
             {boxes.map((o) => (
               <BoxCard key={o.key} o={o} locale={locale} />
             ))}
@@ -115,6 +119,8 @@ export default async function Home({ params }: { params: Promise<{ locale: Local
           <DeliveryMap locale={locale} origin={settings.delivery.origin} label={d.delivery.mapLabel} open={d.delivery.openMap} />
         </div>
       </section>
+
+      <InquiryFunnel locale={locale} whatsapp={settings.whatsapp} />
     </>
   );
 }

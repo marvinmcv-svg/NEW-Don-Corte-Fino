@@ -1,5 +1,6 @@
 "use client";
 
+import Image from "next/image";
 import Link from "next/link";
 import { AnimatePresence, motion } from "motion/react";
 import { useEffect, useRef, useState } from "react";
@@ -10,9 +11,13 @@ import { useCatalog } from "@/lib/catalog-context";
 import { CUTS, METHODS, PRIMALS, PRIMAL_ORDER, type PrimalKey } from "@/lib/cuts";
 import { gsap, prefersReducedMotion, ScrollTrigger } from "@/lib/gsap";
 import { getDict } from "@/lib/i18n";
+import { productPhoto } from "@/lib/media";
 import { CUT_GLSL, CUT_SHAPES, cutDist, cutFocus, EYE, EYE_R, NECK_PIVOT, ZONE_FOCUS, ZONE_GLSL, zoneId, zoneRect } from "./sculpt";
 
 const MODEL_URL = "/models/wagus.bin";
+
+/** Where the cut card settles inside the canvas box (fractions of its size). */
+const CARD = { left: 0.6, top: 0.04, w: 0.4 };
 
 /** How far the steer turns toward the camera when a zone is picked (radians around y). */
 const ZONE_TURN: Record<PrimalKey, number> = {
@@ -281,6 +286,8 @@ export default function Cow3D({ locale }: { locale: Locale }) {
   const wrap = useRef<HTMLDivElement>(null);
   const tag = useRef<HTMLDivElement>(null);
   const api = useRef<Api | null>(null);
+  /** Where the chosen cut sits on screen (px inside the canvas box), so its card can fly out from there. */
+  const popFrom = useRef({ x: 0, y: 0, w: 1, h: 1 });
   const [sel, setSel] = useState<PrimalKey | null>(null);
   const [hover, setHover] = useState<PrimalKey | null>(null);
   const [cutSel, setCutSel] = useState<string | null>(null); // product slug
@@ -433,6 +440,11 @@ export default function Cow3D({ locale }: { locale: Locale }) {
       // the label sits just above the top of the cut
       const topY = Math.max(...shapes.map((sh) => sh.c[1] + (sh.kind === 1 ? sh.r[1] : Math.hypot(sh.r[0], sh.r[1]))));
       cutTag.set(shapes[0].c[0], topY + 0.04, f ? f[2] : 0.42);
+      {
+        const v = new THREE.Vector3(shapes[0].c[0], shapes[0].c[1], f ? f[2] : 0.42).applyMatrix4(group.matrixWorld).project(camera);
+        const r = el.getBoundingClientRect();
+        popFrom.current = { x: ((v.x + 1) / 2) * r.width, y: ((1 - v.y) / 2) * r.height, w: r.width, h: r.height };
+      }
       gsap.fromTo(uniforms.uCutAmt, { value: 0 }, { value: 1, duration: 1.1, ease: "power3.out", overwrite: true });
       gsap.killTweensOf(rig);
       gsap.to(rig, { rotY: primal ? ZONE_TURN[primal] * 0.6 : 0.1, tilt: 0.12, dist: homeDist() * 0.72, focus: 1, sway: 0, duration: 1.5, ease: "expo.inOut" });
@@ -560,12 +572,18 @@ export default function Cow3D({ locale }: { locale: Locale }) {
       timers[1] = window.setTimeout(flick, 4000);
     }
 
+    // Animation time only advances while the steer is on screen, so nothing jumps when it scrolls back in
     const clock = new THREE.Clock();
+    let time = 0;
     const tagPos = new THREE.Vector3();
     const headPos = new THREE.Vector3();
     const loop = () => {
-      if (!visible) return;
-      const t = clock.getElapsedTime();
+      if (!visible) {
+        clock.getDelta();
+        return;
+      }
+      time += Math.min(clock.getDelta(), 1 / 20);
+      const t = time;
       uniforms.uTime.value = reduced ? 0 : t;
       if (!drag && Math.abs(vel) > 0.0001) {
         rig.rotY += vel;
@@ -600,7 +618,7 @@ export default function Cow3D({ locale }: { locale: Locale }) {
       // Floating label pinned to the active cut or zone
       const k = (uniforms.uSel.value ? PRIMAL_ORDER[uniforms.uSel.value - 1] : null) ?? hovered;
       if (tag.current) {
-        if (k && uniforms.uIntro.value > 0.99) {
+        if (k && uniforms.uIntro.value > 0.99 && !cutKey) {
           if (cutKey) tagPos.copy(cutTag);
           else tagPos.set(...ZONE_FOCUS[k]);
           tagPos.applyMatrix4(group.matrixWorld).project(camera);
@@ -642,6 +660,15 @@ export default function Cow3D({ locale }: { locale: Locale }) {
   const active = sel ?? hover;
   const chosen = cutSel ? cuts.find((p) => p.slug === cutSel) : null;
   const info = chosen?.cut ? CUTS[chosen.cut] : null;
+  const photoSrc = chosen ? productPhoto(chosen)?.main.src : undefined;
+  // Offset from the card's resting centre back to the cut on the steer, so it flies out of the body
+  const pop = (() => {
+    if (!chosen || !photoSrc) return null;
+    const f = popFrom.current;
+    const cx = (CARD.left + CARD.w / 2) * f.w;
+    const cy = CARD.top * f.h + (CARD.w * f.w * 0.75) / 2 + 30;
+    return { photo: photoSrc, dx: f.x - cx, dy: f.y - cy };
+  })();
   return (
     <div className="grid items-center gap-10 lg:grid-cols-[1.5fr_1fr]">
       <div className="relative">
@@ -654,6 +681,56 @@ export default function Cow3D({ locale }: { locale: Locale }) {
             <div className="absolute left-0 top-[-18px] h-[18px] w-px bg-champagne/60" />
             <div className="absolute -left-[3px] -top-[3px] h-1.5 w-1.5 rounded-full bg-champagne" />
           </div>
+        </div>
+        {/* The chosen cut comes out of the steer toward you, as a photo of the real piece */}
+        <div className="pointer-events-none absolute inset-0 z-20 [perspective:1100px]">
+          <AnimatePresence>
+            {chosen && pop && (
+              <motion.div
+                key={chosen.slug}
+                initial={{ x: pop.dx, y: pop.dy, z: -500, scale: 0.08, rotateY: -80, rotateX: 35, opacity: 0.85 }}
+                animate={{ x: 0, y: 0, z: 0, scale: 1, rotateY: -14, rotateX: 5, opacity: 1 }}
+                exit={{ x: pop.dx, y: pop.dy, z: -700, scale: 0.1, rotateY: -75, rotateX: 30, opacity: 0, transition: { duration: 0.55, ease: [0.6, 0, 0.8, 0.4] } }}
+                transition={{ type: "spring", stiffness: 38, damping: 11, mass: 1.4, restDelta: 0.001 }}
+                style={{ transformStyle: "preserve-3d", left: `${CARD.left * 100}%`, top: `${CARD.top * 100}%`, width: `${CARD.w * 100}%` }}
+                className="pointer-events-auto absolute"
+              >
+                <div className="animate-[dcf-float_6s_ease-in-out_infinite] [transform-style:preserve-3d]">
+                  <div className="relative overflow-hidden border border-champagne/40 bg-noir shadow-[0_50px_90px_rgba(0,0,0,0.75),0_0_0_1px_rgba(214,197,167,0.08)]">
+                    <div className="relative aspect-[4/3]">
+                      <Image src={pop.photo} alt={chosen.name[locale]} fill sizes="(min-width:1024px) 30vw, 60vw" className="object-cover" />
+                      {/* glossy light sweep across the photo, like a print catching the light */}
+                      <div className="absolute inset-0 animate-[dcf-gloss_4.5s_ease-in-out_infinite] bg-[linear-gradient(115deg,transparent_35%,rgba(255,255,255,0.22)_48%,transparent_60%)] bg-[length:250%_100%]" />
+                      <div className="absolute inset-0 bg-gradient-to-t from-noir/85 via-transparent to-transparent" />
+                      <button
+                        type="button"
+                        onClick={() => api.current?.selectCut(null, null)}
+                        aria-label={locale === "es" ? "Cerrar" : "Close"}
+                        className="absolute right-2 top-2 grid h-8 w-8 place-items-center rounded-full bg-noir/70 text-bone backdrop-blur transition hover:bg-burgundy"
+                      >
+                        ×
+                      </button>
+                      <p className="absolute inset-x-3 bottom-2 font-display text-base uppercase tracking-[0.12em] text-bone md:text-xl">{chosen.name[locale]}</p>
+                    </div>
+                    {info && (
+                      <div className="hidden gap-2 p-3 sm:flex sm:flex-wrap sm:items-center sm:justify-between md:p-4">
+                        <div className="flex flex-wrap gap-1">
+                          {info.methods.slice(0, 3).map((m) => (
+                            <span key={m} className="border border-champagne/25 px-1.5 py-0.5 text-[0.58rem] uppercase tracking-[0.15em] text-champagne">
+                              {METHODS[m][locale]}
+                            </span>
+                          ))}
+                        </div>
+                        <Link href={`/${locale}/cortes/${chosen.slug}`} className="text-[0.65rem] uppercase tracking-[0.2em] text-champagne hover:text-bone">
+                          {d.see} →
+                        </Link>
+                      </div>
+                    )}
+                  </div>
+                </div>
+              </motion.div>
+            )}
+          </AnimatePresence>
         </div>
         <p className="label pointer-events-none absolute bottom-2 left-1/2 -translate-x-1/2 whitespace-nowrap text-[0.58rem] text-steel/70">↔ {d.drag}</p>
       </div>

@@ -97,11 +97,11 @@ void main() {
 
   // Grade: darken, push shadows to burgundy, vignette
   float lum = dot(col, vec3(0.299, 0.587, 0.114));
-  col = mix(col, col * vec3(1.08, 0.9, 0.9), 0.25);
-  col = mix(vec3(0.38, 0.13, 0.18) * lum * 1.4, col, smoothstep(0.0, 0.55, lum));
+  col = mix(col, col * vec3(1.06, 0.97, 0.92), 0.2);
+  col = mix(vec3(0.38, 0.13, 0.18) * lum * 1.4, col, smoothstep(0.0, 0.22, lum));
   float vig = smoothstep(1.25, 0.25, length((st - vec2(0.55, 0.5)) * vec2(1.25, 1.0)));
-  col *= mix(0.4, 1.0, vig);
-  col *= 0.95 - 0.4 * uScroll;
+  col *= mix(0.72, 1.0, vig);
+  col *= 1.0 - 0.4 * uScroll;
 
   // Intro: burgundy veil peels away along a noisy diagonal edge
   float edge = st.x * 0.6 + (1.0 - st.y) * 0.4 + snoise(st * 4.0 + uTime * 0.2) * 0.08;
@@ -289,7 +289,7 @@ export default function HeroGL({ slides, index = 0, className = "" }: { slides: 
           src={src}
           alt=""
           loading={i === 0 ? "eager" : "lazy"}
-          className={`absolute inset-0 h-full w-full object-cover transition-opacity duration-1000 [[data-ready]_&]:!opacity-0 ${i === index ? "opacity-60" : "opacity-0"}`}
+          className={`absolute inset-0 h-full w-full object-cover transition-opacity duration-1000 [[data-ready]_&]:!opacity-0 ${i === index ? "opacity-90" : "opacity-0"}`}
         />
       ))}
     </div>

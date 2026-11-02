@@ -66,7 +66,7 @@ export function HeroSection({ locale, d }: { locale: Locale; d: Dict }) {
         begin();
         return;
       }
-      const split = SplitText.create(title.current, { type: "lines,chars", mask: "lines" });
+      const split = SplitText.create(title.current, { type: "lines,words,chars", mask: "lines" });
       const intro = gsap.timeline({ paused: true, onStart: begin });
       intro
         .from(split.chars, { yPercent: 115, rotateX: -70, transformOrigin: "50% 100%", stagger: 0.028, duration: 1.5 })
@@ -94,18 +94,18 @@ export function HeroSection({ locale, d }: { locale: Locale; d: Dict }) {
   return (
     <section ref={root} className="relative h-[100svh] min-h-[640px] overflow-hidden bg-noir" aria-roledescription="carousel">
       <HeroGL slides={HERO_SLIDES.map((s) => s.src)} index={idx} className="absolute inset-0" />
-      <div className="pointer-events-none absolute inset-0 bg-gradient-to-t from-charcoal via-transparent to-noir/60" />
-      <div className="pointer-events-none absolute inset-y-0 left-0 w-2/3 bg-gradient-to-r from-noir/80 to-transparent" />
+      <div className="pointer-events-none absolute inset-x-0 bottom-0 h-[45%] bg-gradient-to-t from-charcoal via-noir/40 to-transparent" />
+      <div className="pointer-events-none absolute inset-x-0 top-0 h-32 bg-gradient-to-b from-noir/60 to-transparent" />
 
-      <div data-hero-content className="relative z-10 mx-auto flex h-full max-w-[1500px] flex-col justify-end px-4 pb-28 md:px-10 md:pb-24">
-        <p data-hero-fade className="label mb-6">
+      <div data-hero-content className="relative z-10 mx-auto flex h-full max-w-[1500px] flex-col justify-end px-4 pb-24 md:px-10 md:pb-16">
+        <p data-hero-fade className="label mb-4 drop-shadow-[0_2px_8px_rgba(0,0,0,0.8)]">
           {d.hero.kicker}
         </p>
-        <h1 ref={title} className="h-display max-w-6xl text-[13vw] leading-[0.92] md:text-[8.4vw] lg:text-[7.6vw]" style={{ perspective: 600 }}>
+        <h1 ref={title} className="h-display max-w-4xl text-[9vw] leading-[0.98] drop-shadow-[0_6px_30px_rgba(0,0,0,0.55)] sm:text-5xl md:text-6xl lg:text-[4.4rem]" style={{ perspective: 600 }}>
           {d.hero.title1} <span className="text-champagne">{d.hero.title2}</span>
         </h1>
-        <div data-hero-rule className="gold-rule mt-10 max-w-6xl" />
-        <div data-hero-fade className="mt-8 flex flex-wrap items-center gap-x-10 gap-y-6 md:pr-44">
+        <div data-hero-rule className="gold-rule mt-6 max-w-xl" />
+        <div data-hero-fade className="mt-6 flex flex-wrap items-center gap-x-10 gap-y-5 md:pr-44">
           <Magnetic>
             <Link href={`/${locale}/cortes`} className="btn-primary">
               {d.hero.ctaCuts}
@@ -390,7 +390,7 @@ export function OriginSection({ d }: { d: Dict }) {
   );
 
   return (
-    <section ref={root} id="origen" className="relative scroll-mt-20 overflow-x-clip bg-noir px-4 py-28 md:px-10 md:py-40">
+    <section ref={root} id="origen" className="relative scroll-mt-20 overflow-clip bg-noir px-4 py-28 md:px-10 md:py-40">
       {/* contour lines, like a survey map of the plains */}
       <svg data-topo aria-hidden="true" className="pointer-events-none absolute inset-0 h-[120%] w-full opacity-[0.06]" viewBox="0 0 800 600" preserveAspectRatio="xMidYMid slice">
         {Array.from({ length: 14 }, (_, i) => (
@@ -590,9 +590,17 @@ function processPanels(d: Dict, sizes: string) {
   return [
     photo(SCENES.butcher, s[0].t),
     photo(SCENES.aging, s[1].t),
-    photo(SCENES.slicing, s[2].t),
-    <VacuumVisual key="vac" />,
-    <DeliveryVisual key="del" label={d.delivery.kicker} cold={d.process.cold} />,
+    photo(SCENES.handCut, s[2].t),
+    <VacuumVisual key="vac" alt={s[3].t} />,
+    <DeliveryVisual
+      key="del"
+      label={d.delivery.kicker}
+      cold={d.process.cold}
+      shop={d.delivery.shop}
+      door={d.delivery.door}
+      onTheWay={d.delivery.onTheWay}
+      delivered={d.delivery.delivered}
+    />,
   ];
 }
 
@@ -625,23 +633,23 @@ export function ProcessSection({ d }: { d: Dict }) {
   );
 
   return (
-    <section ref={root} className="relative bg-charcoal px-4 py-24 md:px-10 lg:flex lg:h-[100svh] lg:items-center lg:pb-6 lg:pt-24">
+    <section ref={root} className="relative bg-charcoal px-4 py-24 md:px-10 lg:flex lg:h-[100svh] lg:items-center lg:pb-8 lg:pt-28">
       <div className="mx-auto grid w-full max-w-[1500px] items-center gap-12 lg:grid-cols-[1fr_1.1fr]">
         <div>
           <p className="label mb-6">{d.process.kicker}</p>
-          <h2 className="h-display text-4xl leading-[1] md:text-5xl">{d.process.title}</h2>
-          <div className="mt-6 hidden h-[5rem] overflow-hidden lg:block">
-            <div data-pnum className="font-display text-[5rem] leading-none text-wine/80">
+          <h2 className="h-display text-4xl leading-[1] md:text-5xl lg:text-[min(3rem,5.5vh)]">{d.process.title}</h2>
+          <div className="mt-4 hidden h-[min(4rem,7vh)] overflow-hidden lg:block">
+            <div data-pnum className="font-display text-[min(4rem,7vh)] leading-none text-wine/80">
               {steps.map((_, i) => (
-                <div key={i} className="h-[5rem]">
+                <div key={i} className="h-[min(4rem,7vh)]">
                   0{i + 1}
                 </div>
               ))}
             </div>
           </div>
-          <ol className="mt-6 space-y-3">
+          <ol className="mt-4 space-y-2">
             {steps.map((s, i) => (
-              <li key={s.t} data-pstep className="grid grid-cols-[3rem_1fr] gap-4 border-t border-champagne/10 pt-3">
+              <li key={s.t} data-pstep className="grid grid-cols-[3rem_1fr] gap-4 border-t border-champagne/10 pt-2.5">
                 <span className="font-display text-champagne">0{i + 1}</span>
                 <div>
                   <h3 className="h-display text-xl">{s.t}</h3>
@@ -651,7 +659,7 @@ export function ProcessSection({ d }: { d: Dict }) {
             ))}
           </ol>
         </div>
-        <div className="relative hidden h-[76vh] w-full overflow-hidden lg:block">
+        <div className="relative hidden h-[min(72vh,760px)] w-full overflow-hidden lg:block">
           {processPanels(d, "50vw").map((panel, i) => (
             <div key={i} data-pimg className="absolute inset-0 overflow-hidden">
               {panel}
@@ -660,7 +668,7 @@ export function ProcessSection({ d }: { d: Dict }) {
         </div>
         <div className="grid grid-cols-2 gap-3 lg:hidden">
           {processPanels(d, "50vw").map((panel, i) => (
-            <div key={i} className={`relative overflow-hidden ${i === 0 ? "col-span-2 aspect-[16/9]" : "aspect-square"}`}>
+            <div key={i} className={`relative overflow-hidden ${i === 0 ? "col-span-2 aspect-[16/9]" : i === 3 ? "col-span-2 aspect-[16/13]" : i === 4 ? "col-span-2 aspect-[4/5] sm:aspect-[16/10]" : "aspect-square"}`}>
               {panel}
             </div>
           ))}
