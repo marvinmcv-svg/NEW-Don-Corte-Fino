@@ -7,7 +7,6 @@ import Footer from "@/components/Footer";
 import Header from "@/components/Header";
 import VacaLola from "@/components/VacaLola";
 import WhatsAppCTA from "@/components/WhatsAppCTA";
-import WhatsAppFab from "@/components/WhatsAppFab";
 import Cursor from "@/components/motion/Cursor";
 import Preloader from "@/components/motion/Preloader";
 import SmoothScroll from "@/components/motion/SmoothScroll";
@@ -62,8 +61,7 @@ export default async function LocaleLayout({ children, params }: { children: Rea
           <WhatsAppCTA locale={locale} phone={settings.whatsapp} />
           <Footer locale={locale} whatsapp={settings.whatsapp} socials={{ instagram: settings.instagram_url, facebook: settings.facebook_url, tiktok: settings.tiktok_url }} />
           <CartDrawer locale={locale} />
-          <WhatsAppFab phone={settings.whatsapp} />
-          <VacaLola locale={locale} />
+          <VacaLola locale={locale} phone={settings.whatsapp} />
         </CartProvider>
         </CatalogProvider>
         <script

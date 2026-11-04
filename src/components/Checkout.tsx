@@ -352,6 +352,17 @@ export default function Checkout({ locale }: { locale: Locale }) {
               <button onClick={send} disabled={sending || belowMin} className="btn-primary mt-6 w-full bg-[#1f8f4e] hover:bg-[#25D366] disabled:opacity-50">
                 {sending ? "…" : d.send}
               </button>
+              <p className="mt-3 text-center text-[0.68rem] leading-relaxed text-ash">
+                {locale === "es" ? "Al enviar tu pedido aceptas los " : "By sending your order you accept the "}
+                <Link href={`/${locale}/terminos`} className="underline underline-offset-2 hover:text-bone">
+                  {locale === "es" ? "términos" : "terms"}
+                </Link>
+                {locale === "es" ? " y la " : " and the "}
+                <Link href={`/${locale}/privacidad`} className="underline underline-offset-2 hover:text-bone">
+                  {locale === "es" ? "política de privacidad" : "privacy policy"}
+                </Link>
+                .
+              </p>
             </div>
           </aside>
         </div>

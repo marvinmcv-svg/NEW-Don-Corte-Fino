@@ -87,7 +87,11 @@ export default function Footer({ locale, whatsapp, socials }: { locale: Locale; 
       </div>
       <div className="mx-auto mt-16 flex max-w-7xl flex-col gap-2 px-4 pb-6 text-[0.7rem] text-ash/80 md:flex-row md:justify-between md:px-8">
         <span>© {new Date().getFullYear()} Don Corte Fino. {d.footer.rights}</span>
-        <span>{d.footer.ref}</span>
+        <span className="flex flex-wrap gap-x-5 gap-y-1">
+          <span>{d.footer.ref}</span>
+          <Link href={`/${locale}/privacidad`} className="underline-offset-4 hover:text-bone hover:underline">{d.footer.privacy}</Link>
+          <Link href={`/${locale}/terminos`} className="underline-offset-4 hover:text-bone hover:underline">{d.footer.terms}</Link>
+        </span>
       </div>
       <div className="pointer-events-none select-none overflow-hidden whitespace-nowrap">
         <div className="marquee inline-block font-display text-[18vw] leading-[0.85] tracking-[0.02em] text-champagne/[0.04]">
