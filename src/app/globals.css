@@ -20,7 +20,18 @@
 html {
   background: var(--color-noir);
   color-scheme: dark;
-  scroll-behavior: smooth;
+}
+
+/* Lenis drives the scroll; native smooth scrolling fights it and makes the page stutter or stall. */
+html.lenis,
+html.lenis body {
+  height: auto;
+}
+.lenis.lenis-smooth {
+  scroll-behavior: auto !important;
+}
+.lenis.lenis-stopped {
+  overflow: hidden;
 }
 
 body {

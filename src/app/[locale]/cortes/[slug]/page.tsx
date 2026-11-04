@@ -82,10 +82,17 @@ export default async function CutPage({ params }: { params: Promise<{ locale: Lo
             </h1>
             <Reveal delay={0.3}>
               <p className="mt-6 max-w-xl font-serif text-xl leading-relaxed text-steel md:text-2xl">{info.story[locale]}</p>
-              <p className="mt-6 text-steel">
-                <span className="font-display text-3xl text-champagne">{bs(price.amount)}</span>
-                {price.perKg && <span className="text-ash"> /kg</span>}
-              </p>
+              <div className="mt-6 flex flex-wrap items-center gap-6">
+                <p className="text-steel">
+                  <span className="font-display text-3xl text-champagne">{bs(price.amount)}</span>
+                  {price.perKg && <span className="text-ash"> /kg</span>}
+                </p>
+                {p.status !== "sold_out" && (
+                  <a href="#comprar" className="btn-primary">
+                    {getDict(locale).buy.add} ↓
+                  </a>
+                )}
+              </div>
             </Reveal>
           </div>
           {photo ? (
@@ -215,7 +222,7 @@ export default async function CutPage({ params }: { params: Promise<{ locale: Lo
           </section>
         </div>
 
-        <aside className="lg:sticky lg:top-28 lg:self-start">
+        <aside id="comprar" className="order-first scroll-mt-24 lg:order-none lg:sticky lg:top-28 lg:self-start">
           <BuyPanel p={p} locale={locale} />
         </aside>
       </div>

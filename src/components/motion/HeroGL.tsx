@@ -151,10 +151,12 @@ export default function HeroGL({ src, fallback, className = "" }: { src: string;
     const ro = new ResizeObserver(resize);
     ro.observe(el);
 
+    let visible = true;
     // Pointer: smoothed position + decaying velocity
     const target = new THREE.Vector2(0.62, 0.45);
     let last = { x: 0, y: 0, t: performance.now() };
     const move = (e: PointerEvent) => {
+      if (!visible) return; // hero scrolled away: don't force layout reads on every mouse move
       const r = el.getBoundingClientRect();
       target.set((e.clientX - r.left) / r.width, 1 - (e.clientY - r.top) / r.height);
       const now = performance.now();
@@ -162,7 +164,7 @@ export default function HeroGL({ src, fallback, className = "" }: { src: string;
       uniforms.uVel.value = Math.min(1, uniforms.uVel.value + v * 0.08);
       last = { x: e.clientX, y: e.clientY, t: now };
     };
-    window.addEventListener("pointermove", move);
+    window.addEventListener("pointermove", move, { passive: true });
 
     const st = ScrollTrigger.create({
       trigger: el,
@@ -172,7 +174,6 @@ export default function HeroGL({ src, fallback, className = "" }: { src: string;
       onUpdate: (s) => (uniforms.uScroll.value = s.progress),
     });
 
-    let visible = true;
     const io = new IntersectionObserver(([e]) => (visible = e.isIntersecting));
     io.observe(el);
 

@@ -88,6 +88,11 @@ export default function Checkout({ locale }: { locale: Locale }) {
       setError(d.required);
       return;
     }
+    // A typo'd number means we can't confirm the order: require at least a full local mobile number.
+    if (phone.replace(/\D/g, "").length < 7) {
+      setError(d.badPhone);
+      return;
+    }
     if (belowMin) return;
     setError("");
     setSending(true);

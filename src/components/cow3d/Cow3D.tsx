@@ -183,7 +183,8 @@ export default function Cow3D({ locale }: { locale: Locale }) {
       return;
     }
     const reduced = prefersReducedMotion();
-    renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+    // The marbling shader is per-pixel heavy; 1.5× keeps it sharp without choking laptop GPUs.
+    renderer.setPixelRatio(Math.min(window.devicePixelRatio, 1.5));
     renderer.setClearColor(0x000000, 0);
     renderer.domElement.className = "absolute inset-0 h-full w-full touch-pan-y";
     el.appendChild(renderer.domElement);
@@ -226,8 +227,11 @@ export default function Cow3D({ locale }: { locale: Locale }) {
     const focusWorld = new THREE.Vector3();
     const target = new THREE.Vector3();
 
+    // Cached size: reading layout every frame forces reflows while the page scrolls.
+    let box = { width: 1, height: 1 };
     const resize = () => {
       const { width, height } = el.getBoundingClientRect();
+      box = { width: Math.max(1, width), height: Math.max(1, height) };
       renderer.setSize(width, height, false);
       camera.aspect = width / Math.max(1, height);
       // keep the whole steer in frame on tall, narrow screens
@@ -266,6 +270,7 @@ export default function Cow3D({ locale }: { locale: Locale }) {
     const pick = (e: PointerEvent) => {
       if (!mesh) return null;
       const r = el.getBoundingClientRect();
+      if (e.clientX < r.left || e.clientX > r.right || e.clientY < r.top || e.clientY > r.bottom) return null;
       ndc.set(((e.clientX - r.left) / r.width) * 2 - 1, -((e.clientY - r.top) / r.height) * 2 + 1);
       ray.setFromCamera(ndc, camera);
       const hit = ray.intersectObject(mesh)[0];
@@ -315,10 +320,17 @@ export default function Cow3D({ locale }: { locale: Locale }) {
       drag = null;
       el.style.cursor = hovered ? "pointer" : "grab";
     };
+    // The browser took over the gesture (e.g. a vertical swipe became a page scroll): drop the drag
+    // so the steer doesn't keep spinning or swallow the next tap.
+    const cancel = () => {
+      drag = null;
+      vel = 0;
+    };
     const leave = () => setHovered(null);
     el.addEventListener("pointerdown", down);
     window.addEventListener("pointermove", move);
     window.addEventListener("pointerup", up);
+    window.addEventListener("pointercancel", cancel);
     el.addEventListener("pointerleave", leave);
 
     let visible = false;
@@ -349,7 +361,7 @@ export default function Cow3D({ locale }: { locale: Locale }) {
     const clock = new THREE.Clock();
     const tagPos = new THREE.Vector3();
     const loop = () => {
-      if (!visible) return;
+      if (!visible || document.hidden) return;
       const t = clock.getElapsedTime();
       if (!drag && Math.abs(vel) > 0.0001) {
         rig.rotY += vel;
@@ -369,8 +381,7 @@ export default function Cow3D({ locale }: { locale: Locale }) {
       if (tag.current) {
         if (k && uniforms.uIntro.value > 0.99) {
           tagPos.set(...ZONE_FOCUS[k]).applyMatrix4(group.matrixWorld).project(camera);
-          const r = el.getBoundingClientRect();
-          tag.current.style.transform = `translate(${((tagPos.x + 1) / 2) * r.width}px, ${((1 - tagPos.y) / 2) * r.height}px)`;
+          tag.current.style.transform = `translate(${((tagPos.x + 1) / 2) * box.width}px, ${((1 - tagPos.y) / 2) * box.height}px)`;
           tag.current.style.opacity = "1";
         } else tag.current.style.opacity = "0";
       }
@@ -387,6 +398,7 @@ export default function Cow3D({ locale }: { locale: Locale }) {
       el.removeEventListener("pointerdown", down);
       window.removeEventListener("pointermove", move);
       window.removeEventListener("pointerup", up);
+      window.removeEventListener("pointercancel", cancel);
       el.removeEventListener("pointerleave", leave);
       mesh?.geometry.dispose();
       material.dispose();
@@ -417,16 +429,24 @@ export default function Cow3D({ locale }: { locale: Locale }) {
         <p className="label pointer-events-none absolute bottom-2 left-1/2 -translate-x-1/2 whitespace-nowrap text-[0.58rem] text-steel/70">↔ {d.drag}</p>
       </div>
 
-      <div className="min-h-72">
+      {/* Fixed-height panel (sized for the largest zone): if it grew with the selection, every pinned section below would shift.
+          Deliberately not a scroll box: a wheel over a nested scroller would stop the page from scrolling. */}
+      <div>
         <p className="label mb-4">{d.hint}</p>
         <div className="mb-8 flex flex-wrap gap-2">
           {PRIMAL_ORDER.map((k) => (
-            <button key={k} onClick={() => api.current?.select(sel === k ? null : k)} className={`chip ${sel === k ? "chip-on" : ""}`}>
+            <button key={k} aria-pressed={sel === k} onClick={() => api.current?.select(sel === k ? null : k)} className={`chip ${sel === k ? "chip-on" : ""}`}>
               {PRIMALS[k][locale]}
             </button>
           ))}
         </div>
+        <div className="h-[25rem]">
         <AnimatePresence mode="wait">
+          {!active && (
+            <motion.p key="idle" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="max-w-sm font-serif text-xl leading-relaxed text-ash">
+              {d.idle}
+            </motion.p>
+          )}
           {active && (
             <motion.div key={active} initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: -20 }} transition={{ duration: 0.35 }}>
               <h3 className="h-display text-3xl md:text-4xl">{PRIMALS[active][locale]}</h3>
@@ -448,6 +468,7 @@ export default function Cow3D({ locale }: { locale: Locale }) {
             </motion.div>
           )}
         </AnimatePresence>
+        </div>
       </div>
     </div>
   );

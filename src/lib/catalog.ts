@@ -95,6 +95,10 @@ const data = raw as unknown as {
   launch_offers: LaunchOffer[];
 };
 
+/** Official Instagram; used whenever the admin hasn't set a different link. */
+export const INSTAGRAM_URL = "https://www.instagram.com/don.corte_fino/";
+export const INSTAGRAM_HANDLE = "@don.corte_fino";
+
 export const DEFAULT_SLOTS = ["10:00–12:00", "12:00–14:00", "14:00–16:00", "16:00–18:00", "18:00–20:00"];
 
 /** Bundled catalogue: used when Supabase isn't configured or can't be reached. */
@@ -109,7 +113,7 @@ export const seedCatalog: Catalog = {
     min_order: 0,
     slots: DEFAULT_SLOTS,
     announcement: { active: false, es: "", en: "" },
-    instagram_url: null,
+    instagram_url: INSTAGRAM_URL,
     facebook_url: null,
     tiktok_url: null,
   },

@@ -38,7 +38,7 @@ export default async function Home({ params }: { params: Promise<{ locale: Local
   return (
     <>
       {promo && (
-        <div className="fixed inset-x-0 top-16 z-40 bg-burgundy py-2 text-center text-[0.7rem] uppercase tracking-[0.2em] md:top-20">
+        <div className="absolute inset-x-0 top-16 z-40 bg-burgundy py-2 text-center text-[0.7rem] uppercase tracking-[0.2em] md:top-20">
           {promo.name[locale]} · <b>{promo.code}</b> — {promo.pitch[locale]}
         </div>
       )}

@@ -6,6 +6,7 @@ import CartDrawer from "@/components/CartDrawer";
 import Footer from "@/components/Footer";
 import Header from "@/components/Header";
 import VacaLola from "@/components/VacaLola";
+import WhatsAppCTA from "@/components/WhatsAppCTA";
 import WhatsAppFab from "@/components/WhatsAppFab";
 import Cursor from "@/components/motion/Cursor";
 import Preloader from "@/components/motion/Preloader";
@@ -58,6 +59,7 @@ export default async function LocaleLayout({ children, params }: { children: Rea
         <CartProvider>
           <Header locale={locale} nav={d.nav} banner={banner} />
           <main>{children}</main>
+          <WhatsAppCTA locale={locale} phone={settings.whatsapp} />
           <Footer locale={locale} whatsapp={settings.whatsapp} socials={{ instagram: settings.instagram_url, facebook: settings.facebook_url, tiktok: settings.tiktok_url }} />
           <CartDrawer locale={locale} />
           <WhatsAppFab phone={settings.whatsapp} />
