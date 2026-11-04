@@ -1,7 +1,8 @@
 import type { Metadata, Viewport } from "next";
-import { Cinzel, Cormorant_Garamond, Montserrat } from "next/font/google";
+
 import { notFound } from "next/navigation";
 import "../globals.css";
+import { cinzel, cormorant, montserrat } from "@/lib/fonts";
 import CartDrawer from "@/components/CartDrawer";
 import Footer from "@/components/Footer";
 import Header from "@/components/Header";
@@ -14,10 +15,6 @@ import { CartProvider } from "@/lib/cart";
 import { CatalogProvider } from "@/lib/catalog-context";
 import { getCatalog } from "@/lib/catalog-server";
 import { getDict, isLocale, LOCALES } from "@/lib/i18n";
-
-const cinzel = Cinzel({ subsets: ["latin"], variable: "--font-cinzel", weight: ["400", "500", "600"] });
-const cormorant = Cormorant_Garamond({ subsets: ["latin"], variable: "--font-cormorant", weight: ["400", "500"], style: ["normal", "italic"] });
-const montserrat = Montserrat({ subsets: ["latin"], variable: "--font-montserrat", weight: ["400", "500", "600"] });
 
 export const generateStaticParams = () => LOCALES.map((locale) => ({ locale }));
 export const dynamicParams = false;
