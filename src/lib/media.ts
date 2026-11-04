@@ -16,10 +16,15 @@ export const PRODUCT_PHOTOS: Record<string, { main: Photo; alt?: Photo }> = {
   vacio: { main: P("cuts/vacio.webp", 1000, 1000) },
   "tira-de-asado": { main: P("cuts/tira-de-asado.webp", 1400, 933) },
   denver: { main: P("ig/filete-de-aguja.webp", 376, 366) },
-  "colita-de-cuadril": { main: P("scenes/slicing.webp", 640, 1136) },
-  pecho: { main: P("scenes/grill.webp", 1600, 2133) },
-  yakiniku: { main: P("scenes/marbling.webp", 640, 1136) },
-  "shabu-shabu": { main: P("scenes/marbling.webp", 640, 1136) },
+  "colita-de-cuadril": { main: P("ref/colita.webp", 1400, 927), alt: P("scenes/slicing.webp", 640, 1136) },
+  marucha: { main: P("ref/marucha.webp", 1400, 927) },
+  matambre: { main: P("ref/matambre.webp", 969, 1400) },
+  pecho: { main: P("ref/pecho.webp", 1400, 888), alt: P("scenes/grill.webp", 1600, 2133) },
+  yakiniku: { main: P("ref/laminado.webp", 1400, 927) },
+  "shabu-shabu": { main: P("ref/laminado.webp", 1400, 927) },
+  "carne-molida": { main: P("ref/molida.webp", 1400, 933) },
+  "hamburguesas-x4": { main: P("ref/hamburguesas.webp", 933, 1400) },
+  "hamburguesas-x6": { main: P("ref/hamburguesas.webp", 933, 1400) },
 };
 
 /** A photo uploaded in the admin portal wins over the bundled one. */
@@ -39,6 +44,8 @@ export const SCENES = {
   tomahawkTall: P("cuts/tomahawk-tall.webp", 1184, 1775),
   ribeyePlate: P("cuts/ribeye-plate.webp", 1400, 1400),
   vacuumCut: P("cuts/bife-angosto.webp", 1400, 1400),
+  vacuum: P("scenes/vacuum-packs.webp", 1800, 1560),
+  handCut: P("scenes/hero.webp", 2200, 1467),
 };
 
 /** Instagram posts, in the order shown on the social strip. */
@@ -57,6 +64,40 @@ export const IG_POSTS: Photo[] = [
 export const DISH_PHOTOS: Photo[] = [SCENES.seared, SCENES.slicing, SCENES.grill];
 
 export const BOX_PHOTOS: Record<string, Photo> = {
-  "caja-inaugural": P("ig/amor-de-mama.webp", 900, 1125),
+  "parrillada-clasica": P("bundles/parrillada.webp", 1400, 1400),
+  "noche-de-bifes": P("bundles/bifes.webp", 1400, 1400),
+  "asado-de-amigos": P("bundles/asado.webp", 1600, 1280),
+  "caja-inaugural": P("cuts/tomahawk.webp", 1000, 1108),
   "experiencia-degustacion": P("scenes/hero.webp", 2200, 1467),
+};
+
+/* ───────── Breeds: Wikimedia Commons photography, credited on screen as the licences require ───────── */
+
+type Credited = Photo & { credit: string };
+const C = (src: string, w: number, h: number, credit: string): Credited => ({ ...P(src, w, h), credit });
+
+export const BREEDS = {
+  wagyuTajima: C("breeds/wagyu-tajima.webp", 2400, 1600, "Japanexperterna.se · CC BY-SA 3.0"),
+  wagyuFeedlot: C("breeds/wagyu-feedlot.webp", 2000, 1333, "Japanexperterna.se · CC BY-SA 3.0"),
+  wagyuBulls: C("breeds/wagyu-bulls.webp", 2400, 1800, "Taekwondo18176 · CC BY-SA 3.0"),
+  angusPortrait: C("breeds/angus-portrait.webp", 2400, 1800, "Harrison Keely · CC BY 4.0"),
+  angusBull: C("breeds/angus-bull.webp", 2400, 1435, "Bill Kasman · CC BY-SA 2.0"),
+  angusCowCalf: C("breeds/angus-cow-calf.webp", 2000, 1333, "Friedrich Böhringer · CC BY-SA 3.0 AT"),
+  angusRedSoil: C("breeds/angus-red-soil.webp", 1800, 1350, "Quintin Soloviev · CC BY 4.0"),
+};
+
+/** Hero carousel: cattle living free on open pasture (Pexels licence, free for commercial use). */
+export const HERO_SLIDES: { src: string; breed: string; caption: { es: string; en: string }; credit?: string }[] = [
+  { src: "/media/pasture/pasture-2.webp", breed: "Ganado negro", caption: { es: "Sangre Angus en libertad, sobre la loma", en: "Angus blood roaming free over the hills" } },
+  { src: "/media/pasture/pasture-1.webp", breed: "Pastura abierta", caption: { es: "Atardecer en el campo — crianza sin prisa", en: "Sunset in the field — raised without hurry" } },
+  { src: "/media/pasture/pasture-3.webp", breed: "Amanecer", caption: { es: "Niebla, pasto y calma: así empieza el marmoleo", en: "Mist, grass and calm: where marbling begins" } },
+  { src: "/media/pasture/pasture-4.webp", breed: "Campo abierto", caption: { es: "Espacio para moverse, agua y sombra", en: "Room to roam, water and shade" } },
+  { src: "/media/pasture/pasture-5.webp", breed: "Cielo grande", caption: { es: "Bajo el cielo del oriente, rumbo a tu parrilla", en: "Under a big eastern sky, on the way to your grill" } },
+];
+
+/** Origin chapters: genetics, feedlot finishing, the land. */
+export const ORIGIN_PHOTOS = {
+  genetics: BREEDS.angusCowCalf,
+  feedlot: BREEDS.wagyuFeedlot,
+  land: BREEDS.angusRedSoil,
 };

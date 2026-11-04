@@ -80,7 +80,7 @@ export default function Footer({ locale, whatsapp, socials }: { locale: Locale; 
             <li><Link href={`/${locale}/tienda`} className="hover:text-bone">{d.nav.shop}</Link></li>
             <li><Link href={`/${locale}#cajas`} className="hover:text-bone">{d.nav.boxes}</Link></li>
             <li><Link href={`/${locale}#entregas`} className="hover:text-bone">{d.nav.delivery}</Link></li>
-            <li><a href="#pedido-whatsapp" className="hover:text-bone">{locale === "es" ? "Pedido por WhatsApp" : "Order on WhatsApp"}</a></li>
+            <li><a href="#consulta" className="hover:text-bone">{locale === "es" ? "Pedido por WhatsApp" : "Order on WhatsApp"}</a></li>
             <li><a href={socials.instagram || INSTAGRAM_URL} target="_blank" rel="noopener noreferrer" className="hover:text-bone">Instagram</a></li>
           </ul>
         </div>
