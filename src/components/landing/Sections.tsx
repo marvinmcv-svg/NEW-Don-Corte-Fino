@@ -117,7 +117,19 @@ export function HeroSection({ locale, d }: { locale: Locale; d: Dict }) {
               <motion.div key={idx} initial={{ opacity: 0, y: 14 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -14 }} transition={{ duration: 0.45 }}>
                 <p className="font-display text-2xl uppercase tracking-[0.12em] text-bone md:text-3xl">{slide.breed}</p>
                 <p className="mt-1 text-xs text-steel/80 md:text-sm">{slide.caption[locale]}</p>
-                {slide.credit && <p className="mt-1 text-[0.6rem] text-ash/60">{locale === "es" ? "Foto" : "Photo"}: {slide.credit} · Wikimedia Commons</p>}
+                {slide.credit && (
+                  <p className="mt-1 text-[0.6rem] text-ash/60">
+                    {locale === "es" ? "Foto" : "Photo"}:{" "}
+                    {slide.href ? (
+                      <a href={slide.href} target="_blank" rel="noopener noreferrer" className="underline decoration-ash/30 underline-offset-2 hover:text-bone">
+                        {slide.credit}
+                      </a>
+                    ) : (
+                      slide.credit
+                    )}{" "}
+                    · Wikimedia Commons
+                  </p>
+                )}
               </motion.div>
             </AnimatePresence>
           </div>
