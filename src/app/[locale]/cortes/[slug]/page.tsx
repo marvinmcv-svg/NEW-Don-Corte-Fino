@@ -110,7 +110,7 @@ export default async function CutPage({ params }: { params: Promise<{ locale: Lo
         </div>
       </section>
 
-      <div className="mx-auto grid max-w-7xl gap-14 px-4 py-20 md:px-8 lg:grid-cols-[1fr_420px]">
+      <div className="mx-auto grid max-w-7xl grid-cols-1 gap-14 px-4 py-20 md:px-8 lg:grid-cols-[1fr_420px]">
         <div className="space-y-20">
           {/* Where + profile */}
           <section className="grid gap-12 md:grid-cols-2">
