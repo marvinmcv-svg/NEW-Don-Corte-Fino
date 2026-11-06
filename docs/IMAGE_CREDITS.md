@@ -25,3 +25,13 @@ Photos added in the November 2026 refresh. All Pexels photos are free for commer
 
 The `ref/` photos are reference images for cuts without a shop photo yet. A photo uploaded in
 Admin → Productos replaces them automatically.
+
+## Puerto Quijarro (hero carousel)
+
+Wikimedia Commons photos, resized and converted to WebP. They keep their original licences; the hero
+credits each one on screen (author, licence, link to the file page) as those licences require.
+
+| File | Source | Licence |
+|---|---|---|
+| `public/media/quijarro/canal-tamengo.webp` | [Canal do Tamego - panoramio.jpg](https://commons.wikimedia.org/wiki/File:Canal_do_Tamego_-_panoramio.jpg) — Alceu Mauro Denes. The Tamengo Canal, which links Puerto Quijarro to the Paraguay River. | [CC BY 3.0](https://creativecommons.org/licenses/by/3.0/) |
+| `public/media/quijarro/carretera-chiquitana.webp` | [Carretera Santa Cruz-Puerto Quijarro.JPG](https://commons.wikimedia.org/wiki/File:Carretera_Santa_Cruz-Puerto_Quijarro.JPG) — LidZeppelen. The highway to Puerto Quijarro through Chiquitano dry forest. | [CC BY-SA 3.0](https://creativecommons.org/licenses/by-sa/3.0/) (the resized file is shared under the same licence) |

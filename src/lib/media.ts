@@ -86,8 +86,26 @@ export const BREEDS = {
   angusRedSoil: C("breeds/angus-red-soil.webp", 1800, 1350, "Quintin Soloviev · CC BY 4.0"),
 };
 
-/** Hero carousel: cattle living free on open pasture (Pexels licence, free for commercial use). */
-export const HERO_SLIDES: { src: string; breed: string; caption: { es: string; en: string }; credit?: string }[] = [
+/**
+ * Hero carousel: Puerto Quijarro, on the Brazilian border of Santa Cruz (Wikimedia Commons, credited on
+ * screen with a link to the file page as the licences require), then cattle living free on open pasture
+ * (Pexels licence, free for commercial use).
+ */
+export const HERO_SLIDES: { src: string; breed: string; caption: { es: string; en: string }; credit?: string; href?: string }[] = [
+  {
+    src: "/media/quijarro/canal-tamengo.webp",
+    breed: "Puerto Quijarro",
+    caption: { es: "Canal Tamengo: agua, monte y la frontera con Brasil", en: "Tamengo Canal: water, forest and the border with Brazil" },
+    credit: "Alceu Mauro Denes · CC BY 3.0",
+    href: "https://commons.wikimedia.org/wiki/File:Canal_do_Tamego_-_panoramio.jpg",
+  },
+  {
+    src: "/media/quijarro/carretera-chiquitana.webp",
+    breed: "Camino a Brasil",
+    caption: { es: "Monte chiquitano en la ruta Santa Cruz – Puerto Quijarro", en: "Chiquitano forest on the Santa Cruz – Puerto Quijarro road" },
+    credit: "LidZeppelen · CC BY-SA 3.0",
+    href: "https://commons.wikimedia.org/wiki/File:Carretera_Santa_Cruz-Puerto_Quijarro.JPG",
+  },
   { src: "/media/pasture/pasture-2.webp", breed: "Ganado negro", caption: { es: "Sangre Angus en libertad, sobre la loma", en: "Angus blood roaming free over the hills" } },
   { src: "/media/pasture/pasture-1.webp", breed: "Pastura abierta", caption: { es: "Atardecer en el campo — crianza sin prisa", en: "Sunset in the field — raised without hurry" } },
   { src: "/media/pasture/pasture-3.webp", breed: "Amanecer", caption: { es: "Niebla, pasto y calma: así empieza el marmoleo", en: "Mist, grass and calm: where marbling begins" } },
