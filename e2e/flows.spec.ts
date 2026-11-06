@@ -1,5 +1,5 @@
 import { expect, test } from "@playwright/test";
-import { horizontalOverflow, isMobile, open, watchErrors } from "./helpers";
+import { horizontalOverflow, isMobile, open, scrollThrough, settledBox, watchErrors } from "./helpers";
 
 test.describe("navigation", () => {
   test("main menu reaches every section", async ({ page }) => {
@@ -54,7 +54,7 @@ test.describe("ordering", () => {
     await context.route(/wa\.me|api\.whatsapp\.com|whatsapp\.com/, (r) => r.fulfill({ status: 200, body: "whatsapp" }));
 
     await open(page, "/es/cortes/ojo-de-bife");
-    await expect(page.locator("h1").first()).toContainText(/ojo de bife/i);
+    await expect(page.locator("h1").first()).toContainText(/ojo\s+de\s+bife/i);
 
     const add = page.getByRole("button", { name: "Agregar al carrito" });
     await add.scrollIntoViewIfNeeded();
@@ -64,8 +64,8 @@ test.describe("ordering", () => {
     // The drawer slides in with the item.
     const drawer = page.getByRole("dialog", { name: "Tu carrito" });
     await expect(drawer).toBeVisible();
-    await expect(drawer).toContainText(/ojo de bife/i);
-    const box = await drawer.boundingBox();
+    await expect(drawer).toContainText(/ojo\s+de\s+bife/i);
+    const box = await settledBox(drawer);
     const vp = page.viewportSize()!;
     expect(box!.x + box!.width).toBeLessThanOrEqual(vp.width + 1);
     if (isMobile(page)) expect(box!.width).toBeGreaterThan(vp.width - 2); // full screen on phones
@@ -101,7 +101,7 @@ test.describe("ordering", () => {
     const wa = await popup;
     await wa.waitForURL(/wa\.me|whatsapp/);
     const text = decodeURIComponent(new URL(wa.url()).searchParams.get("text") ?? wa.url());
-    expect(text).toMatch(/ojo de bife/i);
+    expect(text).toMatch(/ojo\s+de\s+bife/i);
     expect(text).toContain("Prueba E2E");
     expect(text).toContain("Av. San Martín 123");
 
@@ -121,7 +121,7 @@ test.describe("ordering", () => {
     // Cuts open an options sheet; other products go straight in.
     const sheet = page.getByRole("dialog").filter({ has: page.getByRole("button", { name: "Agregar al carrito" }) });
     if (await sheet.isVisible().catch(() => false)) {
-      const sb = await sheet.boundingBox();
+      const sb = await settledBox(sheet);
       const vp = page.viewportSize()!;
       expect(sb!.y + sb!.height).toBeLessThanOrEqual(vp.height + 1);
       expect(sb!.x + sb!.width).toBeLessThanOrEqual(vp.width + 1);
@@ -167,7 +167,7 @@ test.describe("help launcher", () => {
 
     const chat = page.getByRole("dialog", { name: /Vaca Lola|Lola/ });
     await expect(chat).toBeVisible();
-    const cb = await chat.boundingBox();
+    const cb = await settledBox(chat);
     expect(cb!.x).toBeGreaterThanOrEqual(-1);
     expect(cb!.x + cb!.width).toBeLessThanOrEqual(vp.width + 1);
 
@@ -201,12 +201,8 @@ test.describe("smoothness", () => {
       };
       requestAnimationFrame(tick);
     });
-    const height = await page.evaluate(() => document.documentElement.scrollHeight);
-    for (let y = 0; y < height; y += 400) {
-      await page.mouse.wheel(0, 400);
-      await page.waitForTimeout(60);
-    }
-    await page.waitForTimeout(1500);
+    await scrollThrough(page, 400, 60);
+    await page.waitForTimeout(1000);
     const frames = await page.evaluate(() => (window as unknown as { __frames: number[] }).__frames.slice(1));
     const sorted = [...frames].sort((a, b) => a - b);
     const p95 = sorted[Math.floor(sorted.length * 0.95)];

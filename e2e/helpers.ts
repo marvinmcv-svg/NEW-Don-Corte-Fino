@@ -1,4 +1,4 @@
-import { expect, type Page } from "@playwright/test";
+import { expect, type Locator, type Page } from "@playwright/test";
 
 /** Third-party embeds that are allowed to fail (blocked networks, ad blockers) without failing a test. */
 const THIRD_PARTY = /maps\.google\.com|google\.com\/maps|googletagmanager|instagram\.com|fonts\.g/;
@@ -41,14 +41,36 @@ export async function open(page: Page, path: string) {
   return res;
 }
 
-/** Scrolls the whole page with real wheel/touch-sized steps so scroll-triggered sections all run. */
-export async function scrollThrough(page: Page, step = 600, pause = 80) {
-  const height = await page.evaluate(() => document.documentElement.scrollHeight);
-  for (let y = 0; y < height; y += step) {
+/**
+ * Scrolls to the bottom with real wheel steps so scroll-triggered sections all run. The page can grow
+ * while scrolling (pinned sections add spacers), so the bottom is re-measured on every step.
+ */
+export async function scrollThrough(page: Page, step = 600, pause = 80, onStep?: () => Promise<void>) {
+  const atBottom = () => page.evaluate(() => window.scrollY + window.innerHeight >= document.documentElement.scrollHeight - 4);
+  for (let i = 0; i < 300; i++) {
     await page.mouse.wheel(0, step);
     await page.waitForTimeout(pause);
+    await onStep?.();
+    if (i % 5 === 4 && (await atBottom())) break;
+  }
+  // Let smooth scrolling coast to a stop.
+  for (let i = 0; i < 20 && !(await atBottom()); i++) {
+    await page.mouse.wheel(0, step);
+    await page.waitForTimeout(150);
   }
   await page.waitForTimeout(400);
+}
+
+/** Bounding box once a slide/spring animation has stopped moving. */
+export async function settledBox(locator: Locator) {
+  let prev = await locator.boundingBox();
+  for (let i = 0; i < 40; i++) {
+    await locator.page().waitForTimeout(100);
+    const next = await locator.boundingBox();
+    if (prev && next && Math.abs(prev.x - next.x) < 0.5 && Math.abs(prev.y - next.y) < 0.5 && Math.abs(prev.width - next.width) < 0.5) return next;
+    prev = next;
+  }
+  return prev;
 }
 
 /** Elements that stick out past the right edge and are not clipped by an ancestor. */

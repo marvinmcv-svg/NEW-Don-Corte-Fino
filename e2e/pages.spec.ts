@@ -60,8 +60,10 @@ test("every product page fits the screen", async ({ page, request }) => {
 test("unknown pages show the 404", async ({ page }) => {
   const res = await page.goto("/es/no-existe");
   expect(res?.status()).toBe(404);
-  await expect(page.getByText("404")).toBeVisible();
-  await page.getByRole("link", { name: "Don Corte Fino" }).last().click();
+  // The branded page, inside the site chrome, not Next's bare default.
+  await expect(page.getByText("Este corte no existe")).toBeVisible();
+  await expect(page.locator("header")).toBeVisible();
+  await page.locator("main").getByRole("link", { name: "Don Corte Fino" }).click();
   await expect(page).toHaveURL(/\/(es|en)$/);
 });
 
