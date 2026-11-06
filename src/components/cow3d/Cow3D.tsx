@@ -9,12 +9,14 @@ import CowMap from "@/components/CowMap";
 import type { Locale } from "@/lib/catalog";
 import { useCatalog } from "@/lib/catalog-context";
 import { CUTS, METHODS, PRIMALS, PRIMAL_ORDER, type PrimalKey } from "@/lib/cuts";
-import { gsap, prefersReducedMotion, ScrollTrigger } from "@/lib/gsap";
+import { gsap, LOADED_EVENT, prefersReducedMotion, ScrollTrigger } from "@/lib/gsap";
 import { getDict } from "@/lib/i18n";
 import { productPhoto } from "@/lib/media";
 import { CUT_GLSL, CUT_SHAPES, cutDist, cutFocus, EYE, EYE_R, NECK_PIVOT, ZONE_FOCUS, ZONE_GLSL, zoneId, zoneRect } from "./sculpt";
 
 const MODEL_URL = "/models/wagus.bin";
+/** Same mesh, quantised and gzipped by scripts/pack-cow.mjs (~420 KB instead of ~1 MB). */
+const PACKED_URL = "/models/wagus.q.bin";
 
 /** Where the cut card settles inside the canvas box (fractions of its size). */
 const CARD = { left: 0.6, top: 0.04, w: 0.4 };
@@ -31,7 +33,46 @@ const ZONE_TURN: Record<PrimalKey, number> = {
   flank: -0.05,
 };
 
+function geometryOf(positions: Float32Array, normals: Float32Array, indices: Uint16Array | Uint32Array) {
+  const g = new THREE.BufferGeometry();
+  g.setAttribute("position", new THREE.BufferAttribute(positions, 3));
+  g.setAttribute("normal", new THREE.BufferAttribute(normals, 3));
+  g.setIndex(new THREE.BufferAttribute(indices, 1));
+  g.computeBoundingSphere();
+  return g;
+}
+
+/** Decodes the packed format written by scripts/pack-cow.mjs (already inflated). */
+function decodePacked(buf: ArrayBuffer) {
+  const [vc, ic] = new Uint32Array(buf, 0, 2);
+  const h = new Float32Array(buf, 8, 6);
+  const bytes = new Uint8Array(buf);
+  let o = 32;
+  const n = vc * 3;
+  const positions = new Float32Array(n);
+  for (let i = 0; i < n; i++) positions[i] = h[i % 3] + (bytes[o + i] | (bytes[o + n + i] << 8)) * h[3 + (i % 3)];
+  o += n * 2;
+  const normals = new Float32Array(n);
+  const n8 = new Int8Array(buf, o, n);
+  for (let i = 0; i < n; i++) normals[i] = n8[i] / 127;
+  o += n;
+  const indices = new Uint16Array(ic);
+  for (let i = 0, prev = 0; i < ic; i++) {
+    prev = (prev + (bytes[o + i] | (bytes[o + ic + i] << 8))) & 0xffff;
+    indices[i] = prev;
+  }
+  return geometryOf(positions, normals, indices);
+}
+
 async function loadModel() {
+  if (typeof DecompressionStream !== "undefined") {
+    try {
+      const res = await fetch(PACKED_URL);
+      if (res.ok && res.body) return decodePacked(await new Response(res.body.pipeThrough(new DecompressionStream("gzip"))).arrayBuffer());
+    } catch {
+      // fall through to the uncompressed model
+    }
+  }
   const buf = await (await fetch(MODEL_URL)).arrayBuffer();
   const head = new Uint32Array(buf, 0, 2);
   const vc = head[0];
@@ -45,12 +86,7 @@ async function loadModel() {
   const normals = new Float32Array(vc * 3);
   for (let i = 0; i < n8.length; i++) normals[i] = n8[i] / 127;
   const indices = wide ? new Uint32Array(buf, o, ic) : new Uint16Array(buf, o, ic);
-  const g = new THREE.BufferGeometry();
-  g.setAttribute("position", new THREE.BufferAttribute(positions, 3));
-  g.setAttribute("normal", new THREE.BufferAttribute(normals, 3));
-  g.setIndex(new THREE.BufferAttribute(indices, 1));
-  g.computeBoundingSphere();
-  return g;
+  return geometryOf(positions, normals, indices);
 }
 
 const NOISE = /* glsl */ `
@@ -97,10 +133,14 @@ uniform float uCutAmt;
 varying vec3 vObj;
 varying vec3 vN;
 varying vec3 vV;
+varying float vPatch;
 ${ZONE_GLSL}
 ${CUT_GLSL}
+${NOISE}
 ${DEFORM}
 void main() {
+  // Low-frequency hide mottling: smooth enough to evaluate per vertex instead of per pixel.
+  vPatch = fbm(position * 2.5);
   vec4 r;
   float z = zoneOf(position, r);
   float lift = 0.0;
@@ -130,14 +170,19 @@ uniform float uCutAmt;
 varying vec3 vObj;
 varying vec3 vN;
 varying vec3 vV;
+varying float vPatch;
 ${ZONE_GLSL}
 ${CUT_GLSL}
 ${NOISE}
 void main() {
   // Intro: the steer materialises from tail to nose behind a glowing champagne edge.
-  float e = (1.6 - vObj.x) / 3.6 * 0.78 + vnoise(vObj * 7.0) * 0.22;
+  // Once it is whole (uIntro = 1, nothing is cut away) the noise isn't needed any more.
+  float e = 0.0;
   float cut = uIntro * 1.08;
-  if (e > cut) discard;
+  if (uIntro < 1.0) {
+    e = (1.6 - vObj.x) / 3.6 * 0.78 + vnoise(vObj * 7.0) * 0.22;
+    if (e > cut) discard;
+  }
 
   vec4 r;
   float z = zoneOf(vObj, r);
@@ -154,7 +199,7 @@ void main() {
 
   // Black hide with a fine hair grain, a warm brown cast where the light rakes it, and a satin sheen
   float grain = vnoise(vObj * vec3(70.0, 220.0, 70.0));
-  float patchy = fbm(vObj * 2.5);
+  float patchy = vPatch;
   vec3 hide = mix(vec3(0.04, 0.037, 0.039), vec3(0.06, 0.044, 0.038), patchy * 0.6) * (0.8 + 0.4 * grain);
   // soft ambient occlusion: belly, between the legs and toward the ground
   float ao = mix(0.45, 1.0, smoothstep(0.0, 0.9, vObj.y)) * mix(0.7, 1.0, smoothstep(-0.6, 0.3, N.y));
@@ -228,7 +273,7 @@ void main() {
     col += gold * ring;
   }
 
-  col += gold * smoothstep(cut - 0.06, cut, e) * 1.4;
+  if (uIntro < 1.0) col += gold * smoothstep(cut - 0.06, cut, e) * 1.4;
   gl_FragColor = vec4(col, 1.0);
 }`;
 
@@ -309,7 +354,10 @@ export default function Cow3D({ locale }: { locale: Locale }) {
     }
     const reduced = prefersReducedMotion();
     // The marbling shader is per-pixel heavy; 1.5× keeps it sharp without choking laptop GPUs.
-    renderer.setPixelRatio(Math.min(window.devicePixelRatio, 1.5));
+    // If the device still can't keep up, the render loop lowers this further (see `adapt`).
+    let pixelRatio = Math.min(window.devicePixelRatio, 1.5);
+    const MIN_PIXEL_RATIO = 0.75;
+    renderer.setPixelRatio(pixelRatio);
     renderer.setClearColor(0x000000, 0);
     renderer.domElement.className = "absolute inset-0 h-full w-full touch-pan-y";
     el.appendChild(renderer.domElement);
@@ -462,7 +510,7 @@ export default function Cow3D({ locale }: { locale: Locale }) {
     let drag: { x: number; y: number; moved: number } | null = null;
     let vel = 0;
     let hovered: PrimalKey | null = null;
-    const pick = (e: PointerEvent) => {
+    const pick = (e: { clientX: number; clientY: number }) => {
       if (!mesh) return null;
       const r = el.getBoundingClientRect();
       if (e.clientX < r.left || e.clientX > r.right || e.clientY < r.top || e.clientY > r.bottom) return null;
@@ -488,11 +536,12 @@ export default function Cow3D({ locale }: { locale: Locale }) {
       vel = 0;
       gsap.killTweensOf(rig, "rotY,tilt");
     };
+    // Pointer moves anywhere on the page only record the position; the render loop turns it into a
+    // head-look and (for a mouse) a hover raycast at most once per frame, and only while the steer is
+    // on screen. Raycasting 79k triangles and reading layout on every mousemove made scrolling stutter.
+    let pointer: { x: number; y: number; mouse: boolean; dirty: boolean } | null = null;
     const move = (e: PointerEvent) => {
-      const r = el.getBoundingClientRect();
-      look.x = ((e.clientX - r.left) / r.width) * 2 - 1;
-      look.y = -((e.clientY - r.top) / r.height) * 2 + 1;
-      look.active = Math.abs(look.x) < 1.6 && Math.abs(look.y) < 1.6;
+      pointer = { x: e.clientX, y: e.clientY, mouse: e.pointerType === "mouse", dirty: true };
       if (drag) {
         const dx = e.clientX - drag.x, dy = e.clientY - drag.y;
         drag.moved += Math.abs(dx) + Math.abs(dy);
@@ -505,7 +554,7 @@ export default function Cow3D({ locale }: { locale: Locale }) {
           rig.sway = 0;
         }
         if (drag.moved > 6) el.style.cursor = "grabbing";
-      } else if (e.pointerType === "mouse") setHovered(pick(e)?.zone ?? null);
+      }
     };
     const up = (e: PointerEvent) => {
       if (drag && drag.moved < 6) {
@@ -537,6 +586,7 @@ export default function Cow3D({ locale }: { locale: Locale }) {
     const leave = () => {
       setHovered(null);
       look.active = false;
+      pointer = null;
     };
     el.addEventListener("pointerdown", down);
     window.addEventListener("pointermove", move);
@@ -549,25 +599,56 @@ export default function Cow3D({ locale }: { locale: Locale }) {
     io.observe(el);
 
     let intro: ScrollTrigger | null = null;
+    let disposed = false;
+    let idleId = 0;
+    const whenIdle = (fn: () => void) => {
+      const ric = (window as Window & { requestIdleCallback?: (cb: () => void, o?: { timeout: number }) => number }).requestIdleCallback;
+      idleId = ric ? ric(fn, { timeout: 1500 }) : window.setTimeout(fn, 200);
+    };
+    /** Compile every shader (eyes included: they start hidden) and upload the mesh before the steer is on
+     *  screen, so the first visible frame doesn't stall the scroll. Waits for the page intro to finish. */
+    const warmUp = () =>
+      new Promise<void>((resolve) => {
+        const go = () =>
+          whenIdle(async () => {
+            if (disposed) return resolve();
+            const shown = eyes.map((e) => e.visible);
+            eyes.forEach((e) => (e.visible = true));
+            try {
+              await renderer.compileAsync(scene, camera);
+            } catch {
+              // compileAsync is an optimisation; render() compiles on demand anyway
+            }
+            if (!disposed) renderer.render(scene, camera);
+            eyes.forEach((e, i) => (e.visible = shown[i]));
+            resolve();
+          });
+        if ((window as unknown as { __dcfLoaded?: boolean }).__dcfLoaded) go();
+        else window.addEventListener(LOADED_EVENT, go, { once: true });
+      });
+
     loadModel()
-      .then((geometry) => {
+      .then(async (geometry) => {
+        if (disposed) return geometry.dispose();
         mesh = new THREE.Mesh(geometry, material);
         group.add(mesh);
+        await warmUp();
+        if (disposed) return;
         setStatus("ready");
         el.style.cursor = "grab";
         if (reduced) return;
         intro = ScrollTrigger.create({
           trigger: el,
-          start: "top 75%",
+          start: "top 88%",
           once: true,
           onEnter: () => {
-            gsap.to(uniforms.uIntro, { value: 1, duration: 2.4, ease: "power2.inOut" });
-            gsap.to(uniforms.uLines, { value: 1, duration: 1.2, delay: 1.9 });
-            gsap.from(rig, { rotY: -0.9, dist: homeDist() * 1.25, duration: 3, ease: "expo.out" });
+            gsap.to(uniforms.uIntro, { value: 1, duration: 1.6, ease: "power2.inOut" });
+            gsap.to(uniforms.uLines, { value: 1, duration: 0.9, delay: 1.2 });
+            gsap.from(rig, { rotY: -0.9, dist: homeDist() * 1.25, duration: 2.2, ease: "expo.out" });
           },
         });
       })
-      .catch(() => setStatus("fallback"));
+      .catch(() => !disposed && setStatus("fallback"));
 
     // Little signs of life: blinks and ear flicks at uneven intervals
     const timers: number[] = [];
@@ -589,13 +670,41 @@ export default function Cow3D({ locale }: { locale: Locale }) {
     let time = 0;
     const tagPos = new THREE.Vector3();
     const headPos = new THREE.Vector3();
+    // Adaptive resolution: once the intro has played, look at each second of frames; if they average
+    // slower than ~35 fps, render fewer pixels. The first window is skipped (scroll and layout noise).
+    let windows = 0;
+    let frames = 0;
+    let spent = 0;
+    const adapt = (dt: number) => {
+      if (pixelRatio <= MIN_PIXEL_RATIO || dt > 0.5) return; // a long gap is a hidden tab, not slowness
+      frames++;
+      spent += dt;
+      if (spent < 1) return;
+      const avg = spent / frames;
+      frames = 0;
+      spent = 0;
+      if (windows++ === 0 || avg <= 1 / 35) return;
+      pixelRatio = Math.max(MIN_PIXEL_RATIO, pixelRatio - 0.25);
+      renderer.setPixelRatio(pixelRatio);
+      renderer.setSize(box.width, box.height, false);
+    };
     const loop = () => {
       if (!visible || document.hidden) {
         clock.getDelta();
         return;
       }
-      time += Math.min(clock.getDelta(), 1 / 20);
+      const dt = clock.getDelta();
+      if (mesh && uniforms.uIntro.value >= 1) adapt(dt);
+      time += Math.min(dt, 1 / 20);
       const t = time;
+      if (pointer?.dirty) {
+        pointer.dirty = false;
+        const r = el.getBoundingClientRect();
+        look.x = ((pointer.x - r.left) / r.width) * 2 - 1;
+        look.y = -((pointer.y - r.top) / r.height) * 2 + 1;
+        look.active = Math.abs(look.x) < 1.6 && Math.abs(look.y) < 1.6;
+        if (pointer.mouse && !drag && uniforms.uIntro.value > 0.5) setHovered(pick({ clientX: pointer.x, clientY: pointer.y })?.zone ?? null);
+      }
       uniforms.uTime.value = reduced ? 0 : t;
       if (!drag && Math.abs(vel) > 0.0001) {
         rig.rotY += vel;
@@ -642,6 +751,10 @@ export default function Cow3D({ locale }: { locale: Locale }) {
     gsap.ticker.add(loop);
 
     return () => {
+      disposed = true;
+      const cic = (window as Window & { cancelIdleCallback?: (id: number) => void }).cancelIdleCallback;
+      if (cic) cic(idleId);
+      else window.clearTimeout(idleId);
       gsap.ticker.remove(loop);
       timers.forEach((id) => window.clearTimeout(id));
       gsap.killTweensOf(rig);

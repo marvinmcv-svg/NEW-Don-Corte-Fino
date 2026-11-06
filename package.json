@@ -7,7 +7,7 @@
     "build": "next build",
     "start": "next start",
     "lint": "eslint",
-    "bake:cow": "npx -y tsx scripts/bake-cow.ts",
+    "bake:cow": "npx -y tsx scripts/bake-cow.ts && node scripts/pack-cow.mjs",
     "test:e2e": "playwright test"
   },
   "dependencies": {
