@@ -3,18 +3,21 @@
 import Image from "next/image";
 import Link from "next/link";
 import { motion, useMotionValue, useSpring, useTransform } from "motion/react";
-import { useState } from "react";
+import { useCallback, useState } from "react";
 import { useCart } from "@/lib/cart";
 import { badgeFor, fromPrice, type Locale, type Product } from "@/lib/catalog";
 import { shapeFor } from "@/lib/cuts";
 import { bs, getDict } from "@/lib/i18n";
 import { productPhoto } from "@/lib/media";
 import CutArt from "./CutArt";
+import QuickAdd from "./QuickAdd";
 
 export default function ProductCard({ p, locale, large = false }: { p: Product; locale: Locale; large?: boolean }) {
   const d = getDict(locale).store;
   const { add, setOpen } = useCart();
   const [added, setAdded] = useState(false);
+  const [quick, setQuick] = useState(false);
+  const closeQuick = useCallback(() => setQuick(false), []);
   const isCut = p.sale_type === "portion" || p.sale_type === "weight";
   const price = fromPrice(p);
   const badge = badgeFor(p.badge, locale);
@@ -109,21 +112,16 @@ export default function ProductCard({ p, locale, large = false }: { p: Product; 
             <span className="font-display text-lg text-champagne">{bs(price.amount)}</span>
             {price.perKg && <span className="text-xs text-ash">{d.perKg}</span>}
           </p>
-          {isCut ? (
-            <Link href={href} className="text-[0.65rem] font-semibold uppercase tracking-[0.25em] text-bone transition group-hover:text-champagne">
-              {d.view} →
-            </Link>
-          ) : (
-            <button
-              disabled={soldOut}
-              onClick={quickAdd}
-              className="border border-champagne/30 px-4 py-2 text-[0.65rem] font-semibold uppercase tracking-[0.25em] text-bone transition hover:border-wine hover:bg-burgundy disabled:opacity-40"
-            >
-              {added ? `✓ ${d.added}` : `+ ${d.add}`}
-            </button>
-          )}
+          <button
+            disabled={soldOut}
+            onClick={isCut ? () => setQuick(true) : quickAdd}
+            className="shrink-0 border border-wine/70 bg-burgundy/40 px-4 py-2.5 text-[0.65rem] font-semibold uppercase tracking-[0.25em] text-bone transition hover:border-wine hover:bg-burgundy disabled:cursor-not-allowed disabled:opacity-40"
+          >
+            {soldOut ? d.soldOut : added ? `✓ ${d.added}` : `+ ${d.add}`}
+          </button>
         </div>
       </div>
+      {isCut && <QuickAdd p={p} locale={locale} open={quick} onClose={closeQuick} />}
     </motion.article>
   );
 }

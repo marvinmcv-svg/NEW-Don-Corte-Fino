@@ -1,6 +1,6 @@
 import "server-only";
 import { unstable_cache } from "next/cache";
-import { DEFAULT_SLOTS, seedCatalog, type Catalog, type LaunchOffer, type Product, type Settings } from "./catalog";
+import { DEFAULT_SLOTS, INSTAGRAM_URL, seedCatalog, type Catalog, type LaunchOffer, type Product, type Settings } from "./catalog";
 import { hasSupabase } from "./supabase/env";
 import { supabasePublic } from "./supabase/server";
 
@@ -50,7 +50,7 @@ async function load(): Promise<Catalog> {
       min_order: Number(kv.min_order ?? 0),
       slots: Array.isArray(kv.slots) && kv.slots.length ? kv.slots : DEFAULT_SLOTS,
       announcement: kv.announcement ?? seedCatalog.settings.announcement,
-      instagram_url: kv.instagram_url ?? null,
+      instagram_url: kv.instagram_url || INSTAGRAM_URL,
       facebook_url: kv.facebook_url ?? null,
       tiktok_url: kv.tiktok_url ?? null,
     };

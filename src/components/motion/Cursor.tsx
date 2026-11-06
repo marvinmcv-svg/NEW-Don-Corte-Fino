@@ -17,15 +17,20 @@ export default function Cursor() {
     const ry = gsap.quickTo(r, "y", { duration: 0.5, ease: "power3" });
     const dx = gsap.quickTo(d, "x", { duration: 0.1 });
     const dy = gsap.quickTo(d, "y", { duration: 0.1 });
+    let state = "";
     const move = (e: PointerEvent) => {
       rx(e.clientX); ry(e.clientY); dx(e.clientX); dy(e.clientY);
-      const t = (e.target as HTMLElement).closest<HTMLElement>("[data-cursor], a, button");
+      const t = (e.target as Element | null)?.closest?.<HTMLElement>("[data-cursor], a, button");
       const text = t?.dataset.cursor ?? "";
       const big = !!t?.dataset.cursor;
-      gsap.to(r, { width: big ? 96 : t ? 54 : 34, height: big ? 96 : t ? 54 : 34, backgroundColor: big ? "rgba(97,33,47,0.85)" : "rgba(0,0,0,0)", duration: 0.35 });
+      // Only animate when the target kind changes; a new tween on every mouse move piles up and drops frames.
+      const next = `${big ? "big" : t ? "link" : "idle"}|${text}`;
+      if (next === state) return;
+      state = next;
+      gsap.to(r, { width: big ? 96 : t ? 54 : 34, height: big ? 96 : t ? 54 : 34, backgroundColor: big ? "rgba(97,33,47,0.85)" : "rgba(0,0,0,0)", duration: 0.35, overwrite: "auto" });
       l.textContent = text;
     };
-    window.addEventListener("pointermove", move);
+    window.addEventListener("pointermove", move, { passive: true });
     document.documentElement.classList.add("has-cursor");
     return () => {
       window.removeEventListener("pointermove", move);

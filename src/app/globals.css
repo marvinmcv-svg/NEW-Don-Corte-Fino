@@ -20,7 +20,18 @@
 html {
   background: var(--color-noir);
   color-scheme: dark;
-  scroll-behavior: smooth;
+}
+
+/* Lenis drives the scroll; native smooth scrolling fights it and makes the page stutter or stall. */
+html.lenis,
+html.lenis body {
+  height: auto;
+}
+.lenis.lenis-smooth {
+  scroll-behavior: auto !important;
+}
+.lenis.lenis-stopped {
+  overflow: hidden;
 }
 
 body {
@@ -28,7 +39,7 @@ body {
   color: var(--color-bone);
   font-family: var(--font-sans);
   -webkit-font-smoothing: antialiased;
-  overflow-x: hidden;
+  overflow-x: clip;
 }
 
 ::selection {
@@ -156,4 +167,25 @@ body::after {
   to {
     stroke-dashoffset: -36;
   }
+}
+
+@keyframes dcf-slide {
+  from { transform: scaleX(0); }
+  to { transform: scaleX(1); }
+}
+
+@keyframes wa-pulse {
+  0% { box-shadow: 0 0 0 0 rgba(37, 211, 102, 0.55); }
+  70% { box-shadow: 0 0 0 14px rgba(37, 211, 102, 0); }
+  100% { box-shadow: 0 0 0 0 rgba(37, 211, 102, 0); }
+}
+
+@keyframes dcf-float {
+  0%, 100% { transform: translate3d(0, 0, 0) rotateY(0deg) rotateX(0deg); }
+  50% { transform: translate3d(0, -8px, 20px) rotateY(5deg) rotateX(-2deg); }
+}
+
+@keyframes dcf-gloss {
+  0%, 100% { background-position: 120% 0; }
+  50% { background-position: -20% 0; }
 }
