@@ -146,13 +146,13 @@ export default async function CutPage({ params }: { params: Promise<{ locale: Lo
           {/* Cooking */}
           <section>
             <h2 className="h-display mb-8 text-3xl">{d.cook}</h2>
-            <div className="grid grid-cols-5 gap-2">
+            <div className="grid grid-cols-3 gap-2 sm:grid-cols-5">
               {ALL_METHODS.map((m) => {
                 const ok = info.methods.includes(m);
                 return (
-                  <div key={m} className={`border p-3 text-center ${ok ? "border-wine/60 bg-burgundy/20" : "border-champagne/10 opacity-40"}`}>
+                  <div key={m} className={`min-w-0 border px-1.5 py-3 text-center sm:p-3 ${ok ? "border-wine/60 bg-burgundy/20" : "border-champagne/10 opacity-40"}`}>
                     <p className={`text-lg ${ok ? "text-champagne" : "text-ash"}`}>{ok ? "✓" : "✗"}</p>
-                    <p className="mt-1 text-[0.6rem] uppercase tracking-[0.15em] text-steel">{METHODS[m][locale]}</p>
+                    <p className="mt-1 break-words text-[0.6rem] uppercase tracking-[0.1em] text-steel sm:tracking-[0.15em]">{METHODS[m][locale]}</p>
                   </div>
                 );
               })}
