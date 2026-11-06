@@ -11,6 +11,10 @@ import { defineConfig, devices } from "@playwright/test";
 const PORT = 3100;
 const baseURL = process.env.E2E_BASE_URL ?? `http://localhost:${PORT}`;
 
+const desktop = { ...devices["Desktop Chrome"], viewport: { width: 1440, height: 900 } };
+const iphone = { ...devices["iPhone 13"], defaultBrowserType: "chromium" as const, browserName: "chromium" as const };
+const android = devices["Pixel 7"];
+
 export default defineConfig({
   testDir: "./e2e",
   outputDir: "./e2e/.results",
@@ -28,10 +32,14 @@ export default defineConfig({
     locale: "es-BO",
   },
   projects: [
-    { name: "desktop", use: { ...devices["Desktop Chrome"], viewport: { width: 1440, height: 900 } } },
+    { name: "desktop", testIgnore: /perf\.spec/, use: { ...desktop } },
     // Phones are emulated in Chromium (viewport, touch, DPR, user agent).
-    { name: "iphone", use: { ...devices["iPhone 13"], defaultBrowserType: "chromium", browserName: "chromium" } },
-    { name: "android", use: { ...devices["Pixel 7"] } },
+    { name: "iphone", testIgnore: /perf\.spec/, use: { ...iphone } },
+    { name: "android", testIgnore: /perf\.spec/, use: { ...android } },
+    // Scroll smoothness: chained so only one browser runs at a time.
+    { name: "perf-desktop", testMatch: /perf\.spec/, dependencies: ["desktop", "iphone", "android"], use: { ...desktop } },
+    { name: "perf-iphone", testMatch: /perf\.spec/, dependencies: ["perf-desktop"], use: { ...iphone } },
+    { name: "perf-android", testMatch: /perf\.spec/, dependencies: ["perf-iphone"], use: { ...android } },
   ],
   webServer: process.env.E2E_BASE_URL
     ? undefined
