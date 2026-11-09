@@ -7,7 +7,8 @@ import { bs, getDict } from "@/lib/i18n";
 
 const kgLabel = (kg: number): L10n => ({ es: `${kg.toLocaleString("es-BO")} kg`, en: `${kg} kg` });
 
-export default function BuyPanel({ p, locale }: { p: Product; locale: Locale }) {
+/** Options + add-to-basket. `compact` is the quick-add sheet on product cards: no note field, no card frame. */
+export default function BuyPanel({ p, locale, compact = false, onAdded }: { p: Product; locale: Locale; compact?: boolean; onAdded?: () => void }) {
   const d = getDict(locale).buy;
   const { add, setOpen } = useCart();
   const grades = p.grades ?? [];
@@ -63,13 +64,14 @@ export default function BuyPanel({ p, locale }: { p: Product; locale: Locale }) 
     });
     setDone(true);
     setTimeout(() => setDone(false), 1500);
+    onAdded?.();
     setTimeout(() => setOpen(true), 400);
   };
 
   const total = unitPrice * (p.sale_type === "weight" ? 1 : qty);
 
   return (
-    <div className="card space-y-6 p-6 md:p-7">
+    <div className={compact ? "space-y-6" : "card space-y-6 p-6 md:p-7"}>
       {grades.length > 0 && (
         <fieldset>
           <legend className="label mb-3">{d.grade}</legend>
@@ -147,10 +149,12 @@ export default function BuyPanel({ p, locale }: { p: Product; locale: Locale }) 
         </fieldset>
       )}
 
-      <label className="block">
-        <span className="label mb-3 block">{d.note}</span>
-        <input className="input" value={note} onChange={(e) => setNote(e.target.value)} placeholder={d.notePh} maxLength={140} />
-      </label>
+      {!compact && (
+        <label className="block">
+          <span className="label mb-3 block">{d.note}</span>
+          <input className="input" value={note} onChange={(e) => setNote(e.target.value)} placeholder={d.notePh} maxLength={140} />
+        </label>
+      )}
 
       <div className="gold-rule" />
 
@@ -160,7 +164,7 @@ export default function BuyPanel({ p, locale }: { p: Product; locale: Locale }) 
       </div>
       <p className="-mt-3 text-xs leading-relaxed text-ash">{d.estNote}</p>
       <button onClick={submit} disabled={p.status === "sold_out"} className="btn-primary w-full disabled:opacity-40">
-        {done ? "✓" : d.add}
+        {done ? "✓" : `${d.add} · ~${bs(total)}`}
       </button>
     </div>
   );

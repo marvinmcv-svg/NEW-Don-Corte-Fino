@@ -82,10 +82,17 @@ export default async function CutPage({ params }: { params: Promise<{ locale: Lo
             </h1>
             <Reveal delay={0.3}>
               <p className="mt-6 max-w-xl font-serif text-xl leading-relaxed text-steel md:text-2xl">{info.story[locale]}</p>
-              <p className="mt-6 text-steel">
-                <span className="font-display text-3xl text-champagne">{bs(price.amount)}</span>
-                {price.perKg && <span className="text-ash"> /kg</span>}
-              </p>
+              <div className="mt-6 flex flex-wrap items-center gap-6">
+                <p className="text-steel">
+                  <span className="font-display text-3xl text-champagne">{bs(price.amount)}</span>
+                  {price.perKg && <span className="text-ash"> /kg</span>}
+                </p>
+                {p.status !== "sold_out" && (
+                  <a href="#comprar" className="btn-primary">
+                    {getDict(locale).buy.add} ↓
+                  </a>
+                )}
+              </div>
             </Reveal>
           </div>
           {photo ? (
@@ -103,7 +110,7 @@ export default async function CutPage({ params }: { params: Promise<{ locale: Lo
         </div>
       </section>
 
-      <div className="mx-auto grid max-w-7xl gap-14 px-4 py-20 md:px-8 lg:grid-cols-[1fr_420px]">
+      <div className="mx-auto grid max-w-7xl grid-cols-1 gap-14 px-4 py-20 md:px-8 lg:grid-cols-[1fr_420px]">
         <div className="space-y-20">
           {/* Where + profile */}
           <section className="grid gap-12 md:grid-cols-2">
@@ -139,13 +146,13 @@ export default async function CutPage({ params }: { params: Promise<{ locale: Lo
           {/* Cooking */}
           <section>
             <h2 className="h-display mb-8 text-3xl">{d.cook}</h2>
-            <div className="grid grid-cols-5 gap-2">
+            <div className="grid grid-cols-3 gap-2 sm:grid-cols-5">
               {ALL_METHODS.map((m) => {
                 const ok = info.methods.includes(m);
                 return (
-                  <div key={m} className={`border p-3 text-center ${ok ? "border-wine/60 bg-burgundy/20" : "border-champagne/10 opacity-40"}`}>
+                  <div key={m} className={`min-w-0 border px-1.5 py-3 text-center sm:p-3 ${ok ? "border-wine/60 bg-burgundy/20" : "border-champagne/10 opacity-40"}`}>
                     <p className={`text-lg ${ok ? "text-champagne" : "text-ash"}`}>{ok ? "✓" : "✗"}</p>
-                    <p className="mt-1 text-[0.6rem] uppercase tracking-[0.15em] text-steel">{METHODS[m][locale]}</p>
+                    <p className="mt-1 break-words text-[0.6rem] uppercase tracking-[0.1em] text-steel sm:tracking-[0.15em]">{METHODS[m][locale]}</p>
                   </div>
                 );
               })}
@@ -215,7 +222,7 @@ export default async function CutPage({ params }: { params: Promise<{ locale: Lo
           </section>
         </div>
 
-        <aside className="lg:sticky lg:top-28 lg:self-start">
+        <aside id="comprar" className="order-first scroll-mt-24 lg:order-none lg:sticky lg:top-28 lg:self-start">
           <BuyPanel p={p} locale={locale} />
         </aside>
       </div>

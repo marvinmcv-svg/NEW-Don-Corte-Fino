@@ -1,6 +1,6 @@
 import Image from "next/image";
 import Link from "next/link";
-import type { Locale } from "@/lib/catalog";
+import { INSTAGRAM_HANDLE, INSTAGRAM_URL, type Locale } from "@/lib/catalog";
 import { getDict } from "@/lib/i18n";
 import { displayPhone, waLink } from "@/lib/order";
 
@@ -19,7 +19,7 @@ const ICONS: Record<keyof Socials | "whatsapp", string> = {
 export default function Footer({ locale, whatsapp, socials }: { locale: Locale; whatsapp: string; socials: Socials }) {
   const d = getDict(locale);
   const links = [
-    { key: "instagram" as const, label: "Instagram", href: socials.instagram },
+    { key: "instagram" as const, label: "Instagram", href: socials.instagram || INSTAGRAM_URL },
     { key: "facebook" as const, label: "Facebook", href: socials.facebook },
     { key: "tiktok" as const, label: "TikTok", href: socials.tiktok },
     { key: "whatsapp" as const, label: "WhatsApp", href: waLink(whatsapp) },
@@ -30,10 +30,26 @@ export default function Footer({ locale, whatsapp, socials }: { locale: Locale; 
         <div className="md:col-span-2">
           <Image src="/brand/logo-800.webp" alt="Don Corte Fino" width={160} height={160} className="-ml-4 h-40 w-40" />
           <p className="mt-2 max-w-sm font-serif text-lg italic text-ash">“{d.hero.title1} {d.hero.title2}”</p>
+          <a
+            href={socials.instagram || INSTAGRAM_URL}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="group mt-8 inline-flex items-center gap-4 border border-champagne/20 py-3 pl-3 pr-6 transition hover:border-champagne/60"
+          >
+            <span className="flex h-11 w-11 items-center justify-center rounded-full bg-gradient-to-tr from-[#f9ce34] via-[#ee2a7b] to-[#6228d7] text-white">
+              <svg viewBox="0 0 24 24" className="h-5 w-5 fill-current" aria-hidden="true">
+                <path d={ICONS.instagram} />
+              </svg>
+            </span>
+            <span>
+              <span className="label block text-[0.6rem]">{d.footer.igCta}</span>
+              <span className="mt-1 block font-display text-lg tracking-[0.06em] text-bone group-hover:text-champagne">{INSTAGRAM_HANDLE}</span>
+            </span>
+          </a>
         </div>
         <div>
           <p className="label mb-5">{d.footer.hours}</p>
-          <a href={waLink(whatsapp)} target="_blank" rel="noopener" className="font-display text-2xl text-bone hover:text-champagne">
+          <a href={waLink(whatsapp)} target="_blank" rel="noopener noreferrer" className="font-display text-2xl text-bone hover:text-champagne">
             {displayPhone(whatsapp)}
           </a>
           <p className="mt-2 text-sm text-ash">Santa Cruz de la Sierra, Bolivia</p>
@@ -44,7 +60,7 @@ export default function Footer({ locale, whatsapp, socials }: { locale: Locale; 
                 <a
                   href={l.href}
                   target="_blank"
-                  rel="noopener"
+                  rel="noopener noreferrer"
                   aria-label={l.label}
                   title={l.label}
                   className="flex h-11 w-11 items-center justify-center rounded-full border border-champagne/25 text-champagne transition duration-300 hover:-translate-y-0.5 hover:border-champagne hover:bg-champagne hover:text-noir"
@@ -58,18 +74,24 @@ export default function Footer({ locale, whatsapp, socials }: { locale: Locale; 
           </ul>
         </div>
         <div>
-          <p className="label mb-5">Menu</p>
+          <p className="label mb-5">{locale === "es" ? "Menú" : "Menu"}</p>
           <ul className="space-y-3 text-sm text-steel">
             <li><Link href={`/${locale}/cortes`} className="hover:text-bone">{d.nav.cuts}</Link></li>
             <li><Link href={`/${locale}/tienda`} className="hover:text-bone">{d.nav.shop}</Link></li>
             <li><Link href={`/${locale}#cajas`} className="hover:text-bone">{d.nav.boxes}</Link></li>
             <li><Link href={`/${locale}#entregas`} className="hover:text-bone">{d.nav.delivery}</Link></li>
+            <li><a href="#consulta" className="hover:text-bone">{locale === "es" ? "Pedido por WhatsApp" : "Order on WhatsApp"}</a></li>
+            <li><a href={socials.instagram || INSTAGRAM_URL} target="_blank" rel="noopener noreferrer" className="hover:text-bone">Instagram</a></li>
           </ul>
         </div>
       </div>
       <div className="mx-auto mt-16 flex max-w-7xl flex-col gap-2 px-4 pb-6 text-[0.7rem] text-ash/80 md:flex-row md:justify-between md:px-8">
         <span>© {new Date().getFullYear()} Don Corte Fino. {d.footer.rights}</span>
-        <span>{d.footer.ref}</span>
+        <span className="flex flex-wrap gap-x-5 gap-y-1">
+          <span>{d.footer.ref}</span>
+          <Link href={`/${locale}/privacidad`} className="underline-offset-4 hover:text-bone hover:underline">{d.footer.privacy}</Link>
+          <Link href={`/${locale}/terminos`} className="underline-offset-4 hover:text-bone hover:underline">{d.footer.terms}</Link>
+        </span>
       </div>
       <div className="pointer-events-none select-none overflow-hidden whitespace-nowrap">
         <div className="marquee inline-block font-display text-[18vw] leading-[0.85] tracking-[0.02em] text-champagne/[0.04]">

@@ -1,5 +1,6 @@
 "use client";
 
+import Image from "next/image";
 import Link from "next/link";
 import { AnimatePresence, motion } from "motion/react";
 import { useEffect, useRef, useState } from "react";
@@ -7,12 +8,18 @@ import * as THREE from "three";
 import CowMap from "@/components/CowMap";
 import type { Locale } from "@/lib/catalog";
 import { useCatalog } from "@/lib/catalog-context";
-import { CUTS, PRIMALS, PRIMAL_ORDER, type PrimalKey } from "@/lib/cuts";
-import { gsap, prefersReducedMotion, ScrollTrigger } from "@/lib/gsap";
+import { CUTS, METHODS, PRIMALS, PRIMAL_ORDER, type PrimalKey } from "@/lib/cuts";
+import { gsap, LOADED_EVENT, prefersReducedMotion, ScrollTrigger } from "@/lib/gsap";
 import { getDict } from "@/lib/i18n";
-import { ZONE_FOCUS, ZONE_GLSL, zoneId, zoneRect } from "./sculpt";
+import { productPhoto } from "@/lib/media";
+import { CUT_GLSL, CUT_SHAPES, cutDist, cutFocus, EYE, EYE_R, NECK_PIVOT, ZONE_FOCUS, ZONE_GLSL, zoneId, zoneRect } from "./sculpt";
 
 const MODEL_URL = "/models/wagus.bin";
+/** Same mesh, quantised and gzipped by scripts/pack-cow.mjs (~420 KB instead of ~1 MB). */
+const PACKED_URL = "/models/wagus.q.bin";
+
+/** Where the cut card settles inside the canvas box (fractions of its size). */
+const CARD = { left: 0.6, top: 0.04, w: 0.4 };
 
 /** How far the steer turns toward the camera when a zone is picked (radians around y). */
 const ZONE_TURN: Record<PrimalKey, number> = {
@@ -26,7 +33,46 @@ const ZONE_TURN: Record<PrimalKey, number> = {
   flank: -0.05,
 };
 
+function geometryOf(positions: Float32Array, normals: Float32Array, indices: Uint16Array | Uint32Array) {
+  const g = new THREE.BufferGeometry();
+  g.setAttribute("position", new THREE.BufferAttribute(positions, 3));
+  g.setAttribute("normal", new THREE.BufferAttribute(normals, 3));
+  g.setIndex(new THREE.BufferAttribute(indices, 1));
+  g.computeBoundingSphere();
+  return g;
+}
+
+/** Decodes the packed format written by scripts/pack-cow.mjs (already inflated). */
+function decodePacked(buf: ArrayBuffer) {
+  const [vc, ic] = new Uint32Array(buf, 0, 2);
+  const h = new Float32Array(buf, 8, 6);
+  const bytes = new Uint8Array(buf);
+  let o = 32;
+  const n = vc * 3;
+  const positions = new Float32Array(n);
+  for (let i = 0; i < n; i++) positions[i] = h[i % 3] + (bytes[o + i] | (bytes[o + n + i] << 8)) * h[3 + (i % 3)];
+  o += n * 2;
+  const normals = new Float32Array(n);
+  const n8 = new Int8Array(buf, o, n);
+  for (let i = 0; i < n; i++) normals[i] = n8[i] / 127;
+  o += n;
+  const indices = new Uint16Array(ic);
+  for (let i = 0, prev = 0; i < ic; i++) {
+    prev = (prev + (bytes[o + i] | (bytes[o + ic + i] << 8))) & 0xffff;
+    indices[i] = prev;
+  }
+  return geometryOf(positions, normals, indices);
+}
+
 async function loadModel() {
+  if (typeof DecompressionStream !== "undefined") {
+    try {
+      const res = await fetch(PACKED_URL);
+      if (res.ok && res.body) return decodePacked(await new Response(res.body.pipeThrough(new DecompressionStream("gzip"))).arrayBuffer());
+    } catch {
+      // fall through to the uncompressed model
+    }
+  }
   const buf = await (await fetch(MODEL_URL)).arrayBuffer();
   const head = new Uint32Array(buf, 0, 2);
   const vc = head[0];
@@ -40,12 +86,7 @@ async function loadModel() {
   const normals = new Float32Array(vc * 3);
   for (let i = 0; i < n8.length; i++) normals[i] = n8[i] / 127;
   const indices = wide ? new Uint32Array(buf, o, ic) : new Uint16Array(buf, o, ic);
-  const g = new THREE.BufferGeometry();
-  g.setAttribute("position", new THREE.BufferAttribute(positions, 3));
-  g.setAttribute("normal", new THREE.BufferAttribute(normals, 3));
-  g.setIndex(new THREE.BufferAttribute(indices, 1));
-  g.computeBoundingSphere();
-  return g;
+  return geometryOf(positions, normals, indices);
 }
 
 const NOISE = /* glsl */ `
@@ -57,23 +98,61 @@ float vnoise(vec3 x) {
 }
 float fbm(vec3 p) { float a = 0.5, s = 0.0; for (int i = 0; i < 4; i++) { s += a * vnoise(p); p *= 2.03; a *= 0.5; } return s; }`;
 
+/** Bends the head around the neck hinge, flicks the ears, swishes the tail and lets the barrel breathe. */
+const DEFORM = /* glsl */ `
+uniform float uTime;
+uniform float uYaw;
+uniform float uPitch;
+uniform float uEar;
+uniform vec3 uPivot;
+vec3 rotY(vec3 p, float a) { float c = cos(a), s = sin(a); return vec3(c * p.x + s * p.z, p.y, -s * p.x + c * p.z); }
+vec3 rotZ(vec3 p, float a) { float c = cos(a), s = sin(a); return vec3(c * p.x - s * p.y, s * p.x + c * p.y, p.z); }
+void deform(inout vec3 p, inout vec3 n) {
+  // breathing: the barrel swells a few millimetres
+  float body = smoothstep(-1.0, -0.6, p.x) * smoothstep(1.25, 0.85, p.x) * smoothstep(0.62, 0.95, p.y);
+  p += n * sin(uTime * 1.5) * 0.0045 * body;
+  // tail swish, stronger toward the switch
+  float tail = smoothstep(1.28, 1.34, p.x) * smoothstep(1.05, 0.7, p.y) * step(abs(p.z), 0.1);
+  p.z += sin(uTime * 1.3 - p.y * 2.0) * 0.1 * tail * (1.05 - p.y) * 2.0;
+  // ear flick
+  float ear = smoothstep(0.25, 0.34, abs(p.z)) * smoothstep(-1.2, -1.28, p.x) * smoothstep(1.35, 1.42, p.y);
+  p.y += uEar * (abs(p.z) - 0.25) * 0.9 * ear;
+  // head turn around the neck
+  float w = smoothstep(uPivot.x + 0.05, uPivot.x - 0.28, p.x) * smoothstep(0.75, 0.95, p.y);
+  vec3 q = p - uPivot;
+  q = rotY(rotZ(q, uPitch * w), uYaw * w);
+  p = q + uPivot;
+  n = rotY(rotZ(n, uPitch * w), uYaw * w);
+}`;
+
 const vert = /* glsl */ `
 uniform float uSel;
 uniform float uHover;
 uniform float uLift;
+uniform float uCutAmt;
 varying vec3 vObj;
 varying vec3 vN;
 varying vec3 vV;
+varying float vPatch;
 ${ZONE_GLSL}
+${CUT_GLSL}
+${NOISE}
+${DEFORM}
 void main() {
+  // Low-frequency hide mottling: smooth enough to evaluate per vertex instead of per pixel.
+  vPatch = fbm(position * 2.5);
   vec4 r;
   float z = zoneOf(position, r);
   float lift = 0.0;
-  if (z > 0.5 && abs(z - uSel) < 0.5) lift += uLift;
+  if (z > 0.5 && abs(z - uSel) < 0.5) lift += uLift * (1.0 - uCutAmt);
   if (z > 0.5 && abs(z - uHover) < 0.5) lift += 0.01;
-  vec4 mv = modelViewMatrix * vec4(position + normal * lift, 1.0);
+  if (uCutAmt > 0.0 && cutDist(position.xy) < 0.0) lift += 0.07 * uCutAmt;
+  vec3 p = position;
+  vec3 n = normal;
+  deform(p, n);
+  vec4 mv = modelViewMatrix * vec4(p + n * lift, 1.0);
   vObj = position;
-  vN = normalize(normalMatrix * normal);
+  vN = normalize(normalMatrix * n);
   vV = -mv.xyz;
   gl_Position = projectionMatrix * mv;
 }`;
@@ -87,16 +166,23 @@ uniform float uIntro;
 uniform float uLines;
 uniform vec3 uClick;
 uniform float uClickT;
+uniform float uCutAmt;
 varying vec3 vObj;
 varying vec3 vN;
 varying vec3 vV;
+varying float vPatch;
 ${ZONE_GLSL}
+${CUT_GLSL}
 ${NOISE}
 void main() {
   // Intro: the steer materialises from tail to nose behind a glowing champagne edge.
-  float e = (1.6 - vObj.x) / 3.6 * 0.78 + vnoise(vObj * 7.0) * 0.22;
+  // Once it is whole (uIntro = 1, nothing is cut away) the noise isn't needed any more.
+  float e = 0.0;
   float cut = uIntro * 1.08;
-  if (e > cut) discard;
+  if (uIntro < 1.0) {
+    e = (1.6 - vObj.x) / 3.6 * 0.78 + vnoise(vObj * 7.0) * 0.22;
+    if (e > cut) discard;
+  }
 
   vec4 r;
   float z = zoneOf(vObj, r);
@@ -111,10 +197,27 @@ void main() {
   float spec = pow(max(dot(N, H), 0.0), 36.0);
   vec3 gold = vec3(0.84, 0.77, 0.65);
 
-  // Black hide with a fine hair grain and a satin sheen
+  // Black hide with a fine hair grain, a warm brown cast where the light rakes it, and a satin sheen
   float grain = vnoise(vObj * vec3(70.0, 220.0, 70.0));
-  vec3 hide = vec3(0.05, 0.045, 0.047) * (0.8 + 0.4 * grain);
-  vec3 col = hide * dif * 2.4 + spec * vec3(0.32, 0.3, 0.28) + fres * gold * 0.28;
+  float patchy = vPatch;
+  vec3 hide = mix(vec3(0.04, 0.037, 0.039), vec3(0.06, 0.044, 0.038), patchy * 0.6) * (0.8 + 0.4 * grain);
+  // soft ambient occlusion: belly, between the legs and toward the ground
+  float ao = mix(0.45, 1.0, smoothstep(0.0, 0.9, vObj.y)) * mix(0.7, 1.0, smoothstep(-0.6, 0.3, N.y));
+  float hem = 0.5 + 0.5 * N.y;
+  vec3 col = hide * (dif * 2.4 + hem * 0.2) * ao + spec * vec3(0.34, 0.3, 0.27) * ao + fres * gold * 0.28;
+
+  // Wet, slate-grey muzzle with dark nostrils
+  float muzzle = smoothstep(-1.68, -1.78, vObj.x) * smoothstep(1.13, 1.05, vObj.y);
+  if (muzzle > 0.0) {
+    float nos = smoothstep(0.03, 0.012, length((vObj - vec3(-1.852, 1.0, sign(vObj.z) * 0.058)) * vec3(1.0, 1.1, 1.3)));
+    vec3 skin = mix(vec3(0.11, 0.1, 0.105), vec3(0.16, 0.13, 0.13), vnoise(vObj * 60.0)) * (0.5 + dif * 1.4);
+    skin += pow(max(dot(N, H), 0.0), 80.0) * 0.9;
+    skin = mix(skin, vec3(0.01), nos);
+    col = mix(col, skin, muzzle);
+  }
+  // Hooves: dark horn with a dull shine
+  float hoof = smoothstep(0.09, 0.07, vObj.y);
+  col = mix(col, vec3(0.06, 0.05, 0.045) * (0.6 + dif * 1.6) + pow(max(dot(N, H), 0.0), 20.0) * 0.25, hoof);
 
   // Marbled Wangus underneath
   bool inSel = z > 0.5 && abs(z - uSel) < 0.5;
@@ -131,12 +234,37 @@ void main() {
   }
   if (uSel > 0.5 && !inSel) col *= 1.0 - 0.45 * uSelAmt;
 
+  // A single cut: everything else turns to a dark x-ray ghost, the cut glows solid
+  float cd = 9.0;
+  if (uCutAmt > 0.001) {
+    cd = cutDist(vObj.xy);
+    float inCut = 1.0 - smoothstep(-0.004, 0.004, cd);
+    vec3 ghost = vec3(0.02) + fres * gold * 0.45 + spec * 0.05;
+    float ridge = 1.0 - abs(fbm(vObj * vec3(11.0, 15.0, 11.0) + 1.7) * 2.0 - 1.0);
+    float fat = smoothstep(0.92, 0.985, ridge);
+    vec3 meat = mix(mix(vec3(0.42, 0.04, 0.07), vec3(0.68, 0.11, 0.13), fbm(vObj * 20.0)), vec3(0.97, 0.91, 0.85), fat);
+    vec3 cutCol = meat * (0.45 + 0.85 * dif) + spec * 0.45 + fres * vec3(1.0, 0.55, 0.5) * 0.3;
+    // bone: ivory with a porous grain and a pink marrow line
+    float bd = boneDist(vObj.xy);
+    if (bd < 0.0) {
+      vec3 bone = mix(vec3(0.86, 0.8, 0.68), vec3(0.95, 0.91, 0.82), vnoise(vObj * 90.0));
+      bone = mix(bone, vec3(0.7, 0.38, 0.36), smoothstep(-0.006, -0.012, bd) * 0.35);
+      cutCol = bone * (0.5 + 0.7 * dif) + spec * 0.3;
+    }
+    col = mix(col, mix(ghost, cutCol, inCut), uCutAmt);
+  }
+
   // Butcher's chart lines
   if (z > 0.5) {
     float d = min(min(vObj.x - r.x, r.y - vObj.x), min(vObj.y - r.z, r.w - vObj.y));
     float w = fwidth(d);
     float line = 1.0 - smoothstep(0.003, 0.006 + w, d);
-    col = mix(col, gold, line * uLines * ((inSel || inHov) ? 1.0 : 0.45));
+    col = mix(col, gold, line * uLines * ((inSel || inHov) ? 1.0 : 0.45) * (1.0 - 0.7 * uCutAmt));
+  }
+  if (uCutAmt > 0.001) {
+    float w = fwidth(cd);
+    float edge = 1.0 - smoothstep(0.004, 0.008 + w, abs(cd));
+    col = mix(col, vec3(1.0, 0.93, 0.8), edge * uCutAmt);
   }
 
   // Pulse that ripples out from the click
@@ -145,7 +273,7 @@ void main() {
     col += gold * ring;
   }
 
-  col += gold * smoothstep(cut - 0.06, cut, e) * 1.4;
+  if (uIntro < 1.0) col += gold * smoothstep(cut - 0.06, cut, e) * 1.4;
   gl_FragColor = vec4(col, 1.0);
 }`;
 
@@ -159,18 +287,60 @@ void main() {
   gl_FragColor = vec4(mix(vec3(0.0), vec3(0.84, 0.77, 0.65), ring / max(shadow + ring, 0.001)), (shadow + ring) * uIntro);
 }`;
 
-type Api = { select: (k: PrimalKey | null) => void };
+/** Wet, dark-brown eye with a horizontal pupil, a catch-light and a bright cornea rim. */
+const eyeVert = /* glsl */ `
+varying vec3 vP;
+varying vec3 vN;
+varying vec3 vV;
+void main() {
+  vP = position;
+  vec4 mv = modelViewMatrix * vec4(position, 1.0);
+  vN = normalize(normalMatrix * normal);
+  vV = -mv.xyz;
+  gl_Position = projectionMatrix * mv;
+}`;
+const eyeFrag = /* glsl */ `
+uniform float uR;
+varying vec3 vP;
+varying vec3 vN;
+varying vec3 vV;
+void main() {
+  vec3 N = normalize(vN);
+  vec3 V = normalize(vV);
+  // local +z looks out of the socket
+  vec2 q = vP.xy / uR;
+  float r = length(q * vec2(1.0, 1.15));
+  float front = smoothstep(0.0, 0.5, vP.z / uR);
+  vec3 sclera = vec3(0.16, 0.11, 0.09);
+  vec3 iris = mix(vec3(0.16, 0.08, 0.04), vec3(0.32, 0.18, 0.08), smoothstep(0.75, 0.2, r));
+  float pupil = 1.0 - smoothstep(0.26, 0.3, length(q * vec2(0.65, 1.9)));
+  vec3 col = mix(sclera, iris, front * (1.0 - smoothstep(0.82, 0.9, r)));
+  col = mix(col, vec3(0.005), pupil * front);
+  vec3 L = normalize(vec3(-0.45, 0.75, 0.6));
+  vec3 H = normalize(L + V);
+  col *= 0.35 + 0.9 * max(dot(N, L), 0.0);
+  col += pow(max(dot(N, H), 0.0), 140.0) * 1.6;
+  col += pow(1.0 - max(dot(N, V), 0.0), 4.0) * vec3(0.84, 0.77, 0.65) * 0.35;
+  gl_FragColor = vec4(col, 1.0);
+}`;
+
+type Api = { select: (k: PrimalKey | null) => void; selectCut: (slug: string | null, cut: string | null) => void };
 
 export default function Cow3D({ locale }: { locale: Locale }) {
   const d = getDict(locale).map;
   const wrap = useRef<HTMLDivElement>(null);
   const tag = useRef<HTMLDivElement>(null);
   const api = useRef<Api | null>(null);
+  /** Where the chosen cut sits on screen (px inside the canvas box), so its card can fly out from there. */
+  const popFrom = useRef({ x: 0, y: 0, w: 1, h: 1 });
   const [sel, setSel] = useState<PrimalKey | null>(null);
   const [hover, setHover] = useState<PrimalKey | null>(null);
+  const [cutSel, setCutSel] = useState<string | null>(null); // product slug
   const [status, setStatus] = useState<"loading" | "ready" | "fallback">("loading");
   const { cuts } = useCatalog();
   const cutsIn = (k: PrimalKey) => cuts.filter((p) => p.cut && CUTS[p.cut]?.primal === k);
+  const cutsRef = useRef(cuts);
+  cutsRef.current = cuts;
 
   useEffect(() => {
     const el = wrap.current;
@@ -183,7 +353,11 @@ export default function Cow3D({ locale }: { locale: Locale }) {
       return;
     }
     const reduced = prefersReducedMotion();
-    renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+    // The marbling shader is per-pixel heavy; 1.5× keeps it sharp without choking laptop GPUs.
+    // If the device still can't keep up, the render loop lowers this further (see `adapt`).
+    let pixelRatio = Math.min(window.devicePixelRatio, 1.5);
+    const MIN_PIXEL_RATIO = 0.75;
+    renderer.setPixelRatio(pixelRatio);
     renderer.setClearColor(0x000000, 0);
     renderer.domElement.className = "absolute inset-0 h-full w-full touch-pan-y";
     el.appendChild(renderer.domElement);
@@ -203,6 +377,14 @@ export default function Cow3D({ locale }: { locale: Locale }) {
       uLines: { value: reduced ? 1 : 0 },
       uClick: { value: new THREE.Vector3(0, -10, 0) },
       uClickT: { value: 9 },
+      uTime: { value: 0 },
+      uYaw: { value: 0.1 },
+      uPitch: { value: 0.05 },
+      uEar: { value: 0 },
+      uPivot: { value: new THREE.Vector3(...NECK_PIVOT) },
+      uCutAmt: { value: 0 },
+      uCutS: { value: [new THREE.Vector4(), new THREE.Vector4(), new THREE.Vector4()] },
+      uCutM: { value: [new THREE.Vector2(), new THREE.Vector2(), new THREE.Vector2()] },
     };
     const material = new THREE.ShaderMaterial({ vertexShader: vert, fragmentShader: frag, uniforms, side: THREE.DoubleSide });
     let mesh: THREE.Mesh | null = null;
@@ -219,6 +401,23 @@ export default function Cow3D({ locale }: { locale: Locale }) {
     floor.position.set(-0.15, 0.002, 0);
     group.add(floor);
 
+    // Eyes ride on a head pivot that turns exactly like the vertex shader bends the head.
+    const head = new THREE.Group();
+    head.position.set(...NECK_PIVOT);
+    head.rotation.order = "YZX";
+    group.add(head);
+    const eyeGeo = new THREE.SphereGeometry(EYE_R, 32, 24);
+    const eyeMat = new THREE.ShaderMaterial({ vertexShader: eyeVert, fragmentShader: eyeFrag, uniforms: { uR: { value: EYE_R } } });
+    const eyes = [1, -1].map((side) => {
+      const m = new THREE.Mesh(eyeGeo, eyeMat);
+      m.position.set(EYE[0] - NECK_PIVOT[0], EYE[1] - NECK_PIVOT[1], EYE[2] * side);
+      // look outward and a little forward, like a cow's wide-set eyes
+      m.quaternion.setFromUnitVectors(new THREE.Vector3(0, 0, 1), new THREE.Vector3(-0.3, 0.1, side * 0.95).normalize());
+      m.visible = reduced;
+      head.add(m);
+      return m;
+    });
+
     // Camera rig: orbit angle + distance around a target that drifts toward the chosen zone.
     const rig = { rotY: 0.32, tilt: 0.14, dist: 5.3, focus: 0, sway: 1 };
     const home = new THREE.Vector3(-0.2, 0.95, 0);
@@ -226,8 +425,11 @@ export default function Cow3D({ locale }: { locale: Locale }) {
     const focusWorld = new THREE.Vector3();
     const target = new THREE.Vector3();
 
+    // Cached size: reading layout every frame forces reflows while the page scrolls.
+    let box = { width: 1, height: 1 };
     const resize = () => {
       const { width, height } = el.getBoundingClientRect();
+      box = { width: Math.max(1, width), height: Math.max(1, height) };
       renderer.setSize(width, height, false);
       camera.aspect = width / Math.max(1, height);
       // keep the whole steer in frame on tall, narrow screens
@@ -239,8 +441,18 @@ export default function Cow3D({ locale }: { locale: Locale }) {
     const ro = new ResizeObserver(resize);
     ro.observe(el);
 
+    let cutKey: string | null = null;
+    const cutTag = new THREE.Vector3();
+    const clearCut = () => {
+      if (!cutKey) return;
+      cutKey = null;
+      setCutSel(null);
+      gsap.to(uniforms.uCutAmt, { value: 0, duration: 0.5, overwrite: true });
+    };
+
     const select = (k: PrimalKey | null) => {
       setSel(k);
+      clearCut();
       gsap.killTweensOf(rig);
       gsap.killTweensOf(uniforms.uSelAmt);
       if (k) {
@@ -255,17 +467,53 @@ export default function Cow3D({ locale }: { locale: Locale }) {
         gsap.to(rig, { rotY: 0.32, tilt: 0.14, dist: homeDist(), focus: 0, sway: 1, duration: 1.6, ease: "expo.inOut" });
       }
     };
-    api.current = { select };
 
-    // Pointer: drag to spin (with inertia), hover to preview, tap to pick a zone.
+    /** Show one cut on its own: the rest of the steer ghosts out and the cut lifts off the hide. */
+    const selectCut = (slug: string | null, cut: string | null) => {
+      const shapes = cut ? CUT_SHAPES[cut] : null;
+      if (!slug || !cut || !shapes) {
+        const k = uniforms.uSel.value ? PRIMAL_ORDER[uniforms.uSel.value - 1] : null;
+        clearCut();
+        if (k) gsap.to(rig, { rotY: ZONE_TURN[k], tilt: 0.1, dist: homeDist() * 0.78, focus: 1, duration: 1.2, ease: "expo.inOut" });
+        if (k) focusLocal.set(...ZONE_FOCUS[k]);
+        return;
+      }
+      const primal = CUTS[cut]?.primal;
+      if (primal && uniforms.uSel.value !== zoneId(primal)) select(primal);
+      cutKey = cut;
+      setCutSel(slug);
+      uniforms.uCutS.value.forEach((v, i) => {
+        const sh = shapes[i];
+        if (sh) v.set(sh.c[0], sh.c[1], sh.r[0], sh.r[1]);
+        uniforms.uCutM.value[i].set(sh ? sh.kind : 0, sh?.rot ?? 0);
+      });
+      const f = cutFocus(cut);
+      if (f) focusLocal.set(...f);
+      // the label sits just above the top of the cut
+      const topY = Math.max(...shapes.map((sh) => sh.c[1] + (sh.kind === 1 ? sh.r[1] : Math.hypot(sh.r[0], sh.r[1]))));
+      cutTag.set(shapes[0].c[0], topY + 0.04, f ? f[2] : 0.42);
+      {
+        const v = new THREE.Vector3(shapes[0].c[0], shapes[0].c[1], f ? f[2] : 0.42).applyMatrix4(group.matrixWorld).project(camera);
+        const r = el.getBoundingClientRect();
+        popFrom.current = { x: ((v.x + 1) / 2) * r.width, y: ((1 - v.y) / 2) * r.height, w: r.width, h: r.height };
+      }
+      gsap.fromTo(uniforms.uCutAmt, { value: 0 }, { value: 1, duration: 1.1, ease: "power3.out", overwrite: true });
+      gsap.killTweensOf(rig);
+      gsap.to(rig, { rotY: primal ? ZONE_TURN[primal] * 0.6 : 0.1, tilt: 0.12, dist: homeDist() * 0.72, focus: 1, sway: 0, duration: 1.5, ease: "expo.inOut" });
+    };
+    api.current = { select, selectCut };
+
+    // Pointer: drag to spin (with inertia), hover to preview, tap to pick a zone or a cut.
     const ray = new THREE.Raycaster();
     const ndc = new THREE.Vector2();
+    const look = { x: 0, y: 0, active: false };
     let drag: { x: number; y: number; moved: number } | null = null;
     let vel = 0;
     let hovered: PrimalKey | null = null;
-    const pick = (e: PointerEvent) => {
+    const pick = (e: { clientX: number; clientY: number }) => {
       if (!mesh) return null;
       const r = el.getBoundingClientRect();
+      if (e.clientX < r.left || e.clientX > r.right || e.clientY < r.top || e.clientY > r.bottom) return null;
       ndc.set(((e.clientX - r.left) / r.width) * 2 - 1, -((e.clientY - r.top) / r.height) * 2 + 1);
       ray.setFromCamera(ndc, camera);
       const hit = ray.intersectObject(mesh)[0];
@@ -288,7 +536,12 @@ export default function Cow3D({ locale }: { locale: Locale }) {
       vel = 0;
       gsap.killTweensOf(rig, "rotY,tilt");
     };
+    // Pointer moves anywhere on the page only record the position; the render loop turns it into a
+    // head-look and (for a mouse) a hover raycast at most once per frame, and only while the steer is
+    // on screen. Raycasting 79k triangles and reading layout on every mousemove made scrolling stutter.
+    let pointer: { x: number; y: number; mouse: boolean; dirty: boolean } | null = null;
     const move = (e: PointerEvent) => {
+      pointer = { x: e.clientX, y: e.clientY, mouse: e.pointerType === "mouse", dirty: true };
       if (drag) {
         const dx = e.clientX - drag.x, dy = e.clientY - drag.y;
         drag.moved += Math.abs(dx) + Math.abs(dy);
@@ -301,7 +554,7 @@ export default function Cow3D({ locale }: { locale: Locale }) {
           rig.sway = 0;
         }
         if (drag.moved > 6) el.style.cursor = "grabbing";
-      } else if (e.pointerType === "mouse") setHovered(pick(e)?.zone ?? null);
+      }
     };
     const up = (e: PointerEvent) => {
       if (drag && drag.moved < 6) {
@@ -310,15 +563,35 @@ export default function Cow3D({ locale }: { locale: Locale }) {
           uniforms.uClick.value.copy(hit.point);
           gsap.fromTo(uniforms.uClickT, { value: 0 }, { value: 1.6, duration: 1.6, ease: "none" });
         }
-        select(hit?.zone && zoneId(hit.zone) !== uniforms.uSel.value ? hit.zone : null);
+        // Inside the chosen zone, a tap on a cut shows that cut on its own
+        const cur = uniforms.uSel.value;
+        const inSel = hit?.zone && zoneId(hit.zone) === cur;
+        const hitCut =
+          hit && cur
+            ? cutsRef.current.find((p) => p.cut && CUTS[p.cut]?.primal === PRIMAL_ORDER[cur - 1] && CUT_SHAPES[p.cut] && cutDist(p.cut, hit.point.x, hit.point.y) < 0)
+            : undefined;
+        if (hitCut && hitCut.cut !== cutKey) selectCut(hitCut.slug, hitCut.cut);
+        else if (inSel && cutKey) selectCut(null, null);
+        else select(hit?.zone && !inSel ? hit.zone : null);
       }
       drag = null;
       el.style.cursor = hovered ? "pointer" : "grab";
     };
-    const leave = () => setHovered(null);
+    // The browser took over the gesture (e.g. a vertical swipe became a page scroll): drop the drag
+    // so the steer doesn't keep spinning or swallow the next tap.
+    const cancel = () => {
+      drag = null;
+      vel = 0;
+    };
+    const leave = () => {
+      setHovered(null);
+      look.active = false;
+      pointer = null;
+    };
     el.addEventListener("pointerdown", down);
     window.addEventListener("pointermove", move);
     window.addEventListener("pointerup", up);
+    window.addEventListener("pointercancel", cancel);
     el.addEventListener("pointerleave", leave);
 
     let visible = false;
@@ -326,31 +599,113 @@ export default function Cow3D({ locale }: { locale: Locale }) {
     io.observe(el);
 
     let intro: ScrollTrigger | null = null;
+    let disposed = false;
+    let idleId = 0;
+    const whenIdle = (fn: () => void) => {
+      const ric = (window as Window & { requestIdleCallback?: (cb: () => void, o?: { timeout: number }) => number }).requestIdleCallback;
+      idleId = ric ? ric(fn, { timeout: 1500 }) : window.setTimeout(fn, 200);
+    };
+    /** Compile every shader (eyes included: they start hidden) and upload the mesh before the steer is on
+     *  screen, so the first visible frame doesn't stall the scroll. Waits for the page intro to finish. */
+    const warmUp = () =>
+      new Promise<void>((resolve) => {
+        const go = () =>
+          whenIdle(async () => {
+            if (disposed) return resolve();
+            const shown = eyes.map((e) => e.visible);
+            eyes.forEach((e) => (e.visible = true));
+            try {
+              await renderer.compileAsync(scene, camera);
+            } catch {
+              // compileAsync is an optimisation; render() compiles on demand anyway
+            }
+            if (!disposed) renderer.render(scene, camera);
+            eyes.forEach((e, i) => (e.visible = shown[i]));
+            resolve();
+          });
+        if ((window as unknown as { __dcfLoaded?: boolean }).__dcfLoaded) go();
+        else window.addEventListener(LOADED_EVENT, go, { once: true });
+      });
+
     loadModel()
-      .then((geometry) => {
+      .then(async (geometry) => {
+        if (disposed) return geometry.dispose();
         mesh = new THREE.Mesh(geometry, material);
         group.add(mesh);
+        await warmUp();
+        if (disposed) return;
         setStatus("ready");
         el.style.cursor = "grab";
         if (reduced) return;
         intro = ScrollTrigger.create({
           trigger: el,
-          start: "top 75%",
+          start: "top 88%",
           once: true,
           onEnter: () => {
-            gsap.to(uniforms.uIntro, { value: 1, duration: 2.4, ease: "power2.inOut" });
-            gsap.to(uniforms.uLines, { value: 1, duration: 1.2, delay: 1.9 });
-            gsap.from(rig, { rotY: -0.9, dist: homeDist() * 1.25, duration: 3, ease: "expo.out" });
+            gsap.to(uniforms.uIntro, { value: 1, duration: 1.6, ease: "power2.inOut" });
+            gsap.to(uniforms.uLines, { value: 1, duration: 0.9, delay: 1.2 });
+            gsap.from(rig, { rotY: -0.9, dist: homeDist() * 1.25, duration: 2.2, ease: "expo.out" });
           },
         });
       })
-      .catch(() => setStatus("fallback"));
+      .catch(() => !disposed && setStatus("fallback"));
 
+    // Little signs of life: blinks and ear flicks at uneven intervals
+    const timers: number[] = [];
+    if (!reduced) {
+      const blink = () => {
+        gsap.to(eyes.map((e) => e.scale), { y: 0.08, duration: 0.07, yoyo: true, repeat: 1, ease: "power1.in" });
+        timers[0] = window.setTimeout(blink, 2200 + Math.random() * 4200);
+      };
+      const flick = () => {
+        gsap.fromTo(uniforms.uEar, { value: 0 }, { value: Math.random() < 0.5 ? 0.35 : -0.25, duration: 0.12, yoyo: true, repeat: 3, ease: "sine.inOut" });
+        timers[1] = window.setTimeout(flick, 3500 + Math.random() * 6000);
+      };
+      timers[0] = window.setTimeout(blink, 2500);
+      timers[1] = window.setTimeout(flick, 4000);
+    }
+
+    // Animation time only advances while the steer is on screen, so nothing jumps when it scrolls back in
     const clock = new THREE.Clock();
+    let time = 0;
     const tagPos = new THREE.Vector3();
+    const headPos = new THREE.Vector3();
+    // Adaptive resolution: once the intro has played, look at each second of frames; if they average
+    // slower than ~35 fps, render fewer pixels. The first window is skipped (scroll and layout noise).
+    let windows = 0;
+    let frames = 0;
+    let spent = 0;
+    const adapt = (dt: number) => {
+      if (pixelRatio <= MIN_PIXEL_RATIO || dt > 0.5) return; // a long gap is a hidden tab, not slowness
+      frames++;
+      spent += dt;
+      if (spent < 1) return;
+      const avg = spent / frames;
+      frames = 0;
+      spent = 0;
+      if (windows++ === 0 || avg <= 1 / 35) return;
+      pixelRatio = Math.max(MIN_PIXEL_RATIO, pixelRatio - 0.25);
+      renderer.setPixelRatio(pixelRatio);
+      renderer.setSize(box.width, box.height, false);
+    };
     const loop = () => {
-      if (!visible) return;
-      const t = clock.getElapsedTime();
+      if (!visible || document.hidden) {
+        clock.getDelta();
+        return;
+      }
+      const dt = clock.getDelta();
+      if (mesh && uniforms.uIntro.value >= 1) adapt(dt);
+      time += Math.min(dt, 1 / 20);
+      const t = time;
+      if (pointer?.dirty) {
+        pointer.dirty = false;
+        const r = el.getBoundingClientRect();
+        look.x = ((pointer.x - r.left) / r.width) * 2 - 1;
+        look.y = -((pointer.y - r.top) / r.height) * 2 + 1;
+        look.active = Math.abs(look.x) < 1.6 && Math.abs(look.y) < 1.6;
+        if (pointer.mouse && !drag && uniforms.uIntro.value > 0.5) setHovered(pick({ clientX: pointer.x, clientY: pointer.y })?.zone ?? null);
+      }
+      uniforms.uTime.value = reduced ? 0 : t;
       if (!drag && Math.abs(vel) > 0.0001) {
         rig.rotY += vel;
         vel *= 0.94;
@@ -358,19 +713,37 @@ export default function Cow3D({ locale }: { locale: Locale }) {
       group.rotation.y = rig.rotY + (reduced ? 0 : Math.sin(t * 0.35) * 0.22 * rig.sway);
       group.position.y = reduced ? 0 : Math.sin(t * 0.9) * 0.012 * rig.sway;
       group.updateMatrixWorld();
+
+      // Head follows the pointer; otherwise it idles, glancing around
+      if (!reduced) {
+        let yaw = 0.12 + Math.sin(t * 0.31) * 0.22 + Math.sin(t * 0.13) * 0.1;
+        let pitch = 0.06 + Math.sin(t * 0.23) * 0.07;
+        if (look.active && !drag) {
+          headPos.set(...EYE).applyMatrix4(group.matrixWorld).project(camera);
+          yaw = gsap.utils.clamp(-0.45, 0.85, 0.1 + (look.x - headPos.x) * 0.9);
+          pitch = gsap.utils.clamp(-0.3, 0.32, -(look.y - headPos.y) * 0.7);
+        }
+        uniforms.uYaw.value += (yaw - uniforms.uYaw.value) * 0.05;
+        uniforms.uPitch.value += (pitch - uniforms.uPitch.value) * 0.05;
+      }
+      head.rotation.set(0, uniforms.uYaw.value, uniforms.uPitch.value);
+      const showEyes = uniforms.uIntro.value > 0.86;
+      eyes.forEach((e) => (e.visible = showEyes && uniforms.uCutAmt.value < 0.5));
+
       focusWorld.copy(focusLocal).applyMatrix4(group.matrixWorld);
       target.copy(home).lerp(focusWorld, rig.focus * 0.85);
       camera.position.set(target.x, target.y + Math.sin(rig.tilt) * rig.dist, target.z + Math.cos(rig.tilt) * rig.dist);
       camera.lookAt(target);
       renderer.render(scene, camera);
 
-      // Floating label pinned to the active zone
+      // Floating label pinned to the active cut or zone
       const k = (uniforms.uSel.value ? PRIMAL_ORDER[uniforms.uSel.value - 1] : null) ?? hovered;
       if (tag.current) {
-        if (k && uniforms.uIntro.value > 0.99) {
-          tagPos.set(...ZONE_FOCUS[k]).applyMatrix4(group.matrixWorld).project(camera);
-          const r = el.getBoundingClientRect();
-          tag.current.style.transform = `translate(${((tagPos.x + 1) / 2) * r.width}px, ${((1 - tagPos.y) / 2) * r.height}px)`;
+        if (k && uniforms.uIntro.value > 0.99 && !cutKey) {
+          if (cutKey) tagPos.copy(cutTag);
+          else tagPos.set(...ZONE_FOCUS[k]);
+          tagPos.applyMatrix4(group.matrixWorld).project(camera);
+          tag.current.style.transform = `translate(${((tagPos.x + 1) / 2) * box.width}px, ${((1 - tagPos.y) / 2) * box.height}px)`;
           tag.current.style.opacity = "1";
         } else tag.current.style.opacity = "0";
       }
@@ -378,8 +751,14 @@ export default function Cow3D({ locale }: { locale: Locale }) {
     gsap.ticker.add(loop);
 
     return () => {
+      disposed = true;
+      const cic = (window as Window & { cancelIdleCallback?: (id: number) => void }).cancelIdleCallback;
+      if (cic) cic(idleId);
+      else window.clearTimeout(idleId);
       gsap.ticker.remove(loop);
+      timers.forEach((id) => window.clearTimeout(id));
       gsap.killTweensOf(rig);
+      gsap.killTweensOf(eyes.map((e) => e.scale));
       Object.values(uniforms).forEach((u) => gsap.killTweensOf(u));
       intro?.kill();
       ro.disconnect();
@@ -387,9 +766,12 @@ export default function Cow3D({ locale }: { locale: Locale }) {
       el.removeEventListener("pointerdown", down);
       window.removeEventListener("pointermove", move);
       window.removeEventListener("pointerup", up);
+      window.removeEventListener("pointercancel", cancel);
       el.removeEventListener("pointerleave", leave);
       mesh?.geometry.dispose();
       material.dispose();
+      eyeGeo.dispose();
+      eyeMat.dispose();
       floor.geometry.dispose();
       floorMat.dispose();
       renderer.dispose();
@@ -401,6 +783,17 @@ export default function Cow3D({ locale }: { locale: Locale }) {
   if (status === "fallback") return <CowMap locale={locale} />;
 
   const active = sel ?? hover;
+  const chosen = cutSel ? cuts.find((p) => p.slug === cutSel) : null;
+  const info = chosen?.cut ? CUTS[chosen.cut] : null;
+  const photoSrc = chosen ? productPhoto(chosen)?.main.src : undefined;
+  // Offset from the card's resting centre back to the cut on the steer, so it flies out of the body
+  const pop = (() => {
+    if (!chosen || !photoSrc) return null;
+    const f = popFrom.current;
+    const cx = (CARD.left + CARD.w / 2) * f.w;
+    const cy = CARD.top * f.h + (CARD.w * f.w * 0.75) / 2 + 30;
+    return { photo: photoSrc, dx: f.x - cx, dy: f.y - cy };
+  })();
   return (
     <div className="grid items-center gap-10 lg:grid-cols-[1.5fr_1fr]">
       <div className="relative">
@@ -408,25 +801,83 @@ export default function Cow3D({ locale }: { locale: Locale }) {
           {status === "loading" && <div className="absolute inset-0 animate-pulse bg-[radial-gradient(ellipse_at_center,rgba(214,197,167,0.08),transparent_60%)]" />}
           <div ref={tag} className="pointer-events-none absolute left-0 top-0 z-10 opacity-0 transition-opacity duration-300">
             <div className="-translate-x-1/2 -translate-y-[calc(100%+18px)] whitespace-nowrap border border-champagne/40 bg-noir/80 px-3 py-1.5 font-display text-xs uppercase tracking-[0.2em] text-bone backdrop-blur">
-              {active && PRIMALS[active][locale]}
+              <span>{chosen ? chosen.name[locale] : active && PRIMALS[active][locale]}</span>
             </div>
             <div className="absolute left-0 top-[-18px] h-[18px] w-px bg-champagne/60" />
             <div className="absolute -left-[3px] -top-[3px] h-1.5 w-1.5 rounded-full bg-champagne" />
           </div>
         </div>
+        {/* The chosen cut comes out of the steer toward you, as a photo of the real piece */}
+        <div className="pointer-events-none absolute inset-0 z-20 [perspective:1100px]">
+          <AnimatePresence>
+            {chosen && pop && (
+              <motion.div
+                key={chosen.slug}
+                initial={{ x: pop.dx, y: pop.dy, z: -500, scale: 0.08, rotateY: -80, rotateX: 35, opacity: 0.85 }}
+                animate={{ x: 0, y: 0, z: 0, scale: 1, rotateY: -14, rotateX: 5, opacity: 1 }}
+                exit={{ x: pop.dx, y: pop.dy, z: -700, scale: 0.1, rotateY: -75, rotateX: 30, opacity: 0, transition: { duration: 0.55, ease: [0.6, 0, 0.8, 0.4] } }}
+                transition={{ type: "spring", stiffness: 38, damping: 11, mass: 1.4, restDelta: 0.001 }}
+                style={{ transformStyle: "preserve-3d", left: `${CARD.left * 100}%`, top: `${CARD.top * 100}%`, width: `${CARD.w * 100}%` }}
+                className="pointer-events-auto absolute"
+              >
+                <div className="animate-[dcf-float_6s_ease-in-out_infinite] [transform-style:preserve-3d]">
+                  <div className="relative overflow-hidden border border-champagne/40 bg-noir shadow-[0_50px_90px_rgba(0,0,0,0.75),0_0_0_1px_rgba(214,197,167,0.08)]">
+                    <div className="relative aspect-[4/3]">
+                      <Image src={pop.photo} alt={chosen.name[locale]} fill sizes="(min-width:1024px) 30vw, 60vw" className="object-cover" />
+                      {/* glossy light sweep across the photo, like a print catching the light */}
+                      <div className="absolute inset-0 animate-[dcf-gloss_4.5s_ease-in-out_infinite] bg-[linear-gradient(115deg,transparent_35%,rgba(255,255,255,0.22)_48%,transparent_60%)] bg-[length:250%_100%]" />
+                      <div className="absolute inset-0 bg-gradient-to-t from-noir/85 via-transparent to-transparent" />
+                      <button
+                        type="button"
+                        onClick={() => api.current?.selectCut(null, null)}
+                        aria-label={locale === "es" ? "Cerrar" : "Close"}
+                        className="absolute right-2 top-2 grid h-8 w-8 place-items-center rounded-full bg-noir/70 text-bone backdrop-blur transition hover:bg-burgundy"
+                      >
+                        ×
+                      </button>
+                      <p className="absolute inset-x-3 bottom-2 font-display text-base uppercase tracking-[0.12em] text-bone md:text-xl">{chosen.name[locale]}</p>
+                    </div>
+                    {info && (
+                      <div className="hidden gap-2 p-3 sm:flex sm:flex-wrap sm:items-center sm:justify-between md:p-4">
+                        <div className="flex flex-wrap gap-1">
+                          {info.methods.slice(0, 3).map((m) => (
+                            <span key={m} className="border border-champagne/25 px-1.5 py-0.5 text-[0.58rem] uppercase tracking-[0.15em] text-champagne">
+                              {METHODS[m][locale]}
+                            </span>
+                          ))}
+                        </div>
+                        <Link href={`/${locale}/cortes/${chosen.slug}`} className="text-[0.65rem] uppercase tracking-[0.2em] text-champagne hover:text-bone">
+                          {d.see} →
+                        </Link>
+                      </div>
+                    )}
+                  </div>
+                </div>
+              </motion.div>
+            )}
+          </AnimatePresence>
+        </div>
         <p className="label pointer-events-none absolute bottom-2 left-1/2 -translate-x-1/2 whitespace-nowrap text-[0.58rem] text-steel/70">↔ {d.drag}</p>
       </div>
 
-      <div className="min-h-72">
+      {/* Reserved height so picking a zone rarely changes the page height (SmoothScroll re-measures pins when it does).
+          Deliberately not a scroll box: a wheel over a nested scroller would stop the page from scrolling. */}
+      <div>
         <p className="label mb-4">{d.hint}</p>
         <div className="mb-8 flex flex-wrap gap-2">
           {PRIMAL_ORDER.map((k) => (
-            <button key={k} onClick={() => api.current?.select(sel === k ? null : k)} className={`chip ${sel === k ? "chip-on" : ""}`}>
+            <button key={k} aria-pressed={sel === k} onClick={() => api.current?.select(sel === k ? null : k)} className={`chip ${sel === k ? "chip-on" : ""}`}>
               {PRIMALS[k][locale]}
             </button>
           ))}
         </div>
+        <div className="min-h-[25rem]">
         <AnimatePresence mode="wait">
+          {!active && (
+            <motion.p key="idle" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="max-w-sm font-serif text-xl leading-relaxed text-ash">
+              {d.idle}
+            </motion.p>
+          )}
           {active && (
             <motion.div key={active} initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: -20 }} transition={{ duration: 0.35 }}>
               <h3 className="h-display text-3xl md:text-4xl">{PRIMALS[active][locale]}</h3>
@@ -434,20 +885,53 @@ export default function Cow3D({ locale }: { locale: Locale }) {
               {cutsIn(active).length === 0 ? (
                 <p className="text-ash">{d.noCuts}</p>
               ) : (
-                <ul className="space-y-1">
-                  {cutsIn(active).map((p) => (
-                    <li key={p.slug}>
-                      <Link href={`/${locale}/cortes/${p.slug}`} className="group flex items-center justify-between border-b border-champagne/10 py-3 font-serif text-xl text-steel transition hover:text-bone">
-                        {p.name[locale]}
-                        <span className="text-xs uppercase tracking-[0.25em] text-champagne opacity-0 transition group-hover:opacity-100">{d.see} →</span>
-                      </Link>
-                    </li>
-                  ))}
-                </ul>
+                <>
+                  <p className="mb-2 text-xs uppercase tracking-[0.25em] text-ash">{d.pickCut}</p>
+                  <ul className="space-y-1">
+                    {cutsIn(active).map((p) => {
+                      const on = cutSel === p.slug;
+                      const ci = p.cut ? CUTS[p.cut] : null;
+                      return (
+                        <li key={p.slug} className={`border-b transition-colors ${on ? "border-champagne/50" : "border-champagne/10"}`}>
+                          <button
+                            onClick={() => api.current?.selectCut(on ? null : p.slug, on ? null : p.cut)}
+                            aria-pressed={on}
+                            className={`group flex w-full items-center justify-between py-3 text-left font-serif text-xl transition ${on ? "text-bone" : "text-steel hover:text-bone"}`}
+                          >
+                            <span className="flex items-center gap-3">
+                              <span className={`h-2 w-2 rounded-full border border-champagne transition ${on ? "bg-champagne" : "bg-transparent"}`} />
+                              {p.name[locale]}
+                            </span>
+                            <span className="text-xs uppercase tracking-[0.25em] text-champagne opacity-0 transition group-hover:opacity-100">{on ? "×" : d.show3d}</span>
+                          </button>
+                          <AnimatePresence initial={false}>
+                            {on && ci && (
+                              <motion.div initial={{ height: 0, opacity: 0 }} animate={{ height: "auto", opacity: 1 }} exit={{ height: 0, opacity: 0 }} transition={{ duration: 0.35 }} className="overflow-hidden">
+                                <p className="pb-3 text-sm leading-relaxed text-ash">{ci.story[locale].split(". ")[0]}.</p>
+                                <div className="flex flex-wrap gap-1.5 pb-3">
+                                  {ci.methods.map((m) => (
+                                    <span key={m} className="border border-champagne/20 px-2 py-0.5 text-[0.65rem] uppercase tracking-[0.15em] text-champagne">
+                                      {METHODS[m][locale]}
+                                    </span>
+                                  ))}
+                                </div>
+                                <Link href={`/${locale}/cortes/${p.slug}`} className="mb-4 inline-block text-xs uppercase tracking-[0.25em] text-champagne hover:text-bone">
+                                  {d.see} →
+                                </Link>
+                              </motion.div>
+                            )}
+                          </AnimatePresence>
+                        </li>
+                      );
+                    })}
+                  </ul>
+                </>
               )}
             </motion.div>
           )}
         </AnimatePresence>
+        {info && <span className="sr-only" aria-live="polite">{chosen?.name[locale]}</span>}
+        </div>
       </div>
     </div>
   );

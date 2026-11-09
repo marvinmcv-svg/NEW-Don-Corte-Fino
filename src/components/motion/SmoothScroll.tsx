@@ -38,7 +38,30 @@ export default function SmoothScroll() {
     return () => clearTimeout(id);
   }, [pathname]);
 
-  // The cart drawer locks scrolling.
+  // Content that grows or shrinks after load (the 3D cow's info panel, accordions, filters, late images)
+  // moves every pinned section below it. Re-measure ScrollTrigger whenever the page height really changes,
+  // otherwise pins start at stale positions and the page seems to freeze or jump.
+  useEffect(() => {
+    let last = document.documentElement.scrollHeight;
+    let t: ReturnType<typeof setTimeout> | undefined;
+    const ro = new ResizeObserver(() => {
+      clearTimeout(t);
+      t = setTimeout(() => {
+        const h = document.documentElement.scrollHeight;
+        if (Math.abs(h - last) < 2) return;
+        ScrollTrigger.refresh();
+        window.__lenis?.resize();
+        last = document.documentElement.scrollHeight;
+      }, 200);
+    });
+    ro.observe(document.body);
+    return () => {
+      clearTimeout(t);
+      ro.disconnect();
+    };
+  }, []);
+
+  // The cart drawer and modals lock scrolling.
   useEffect(() => {
     const obs = new MutationObserver(() => {
       if (document.body.style.overflow === "hidden") window.__lenis?.stop();

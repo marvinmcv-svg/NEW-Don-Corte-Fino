@@ -43,7 +43,7 @@ export default function Header({ locale, nav, banner }: { locale: Locale; nav: D
         <Link href={`/${locale}`} className="group flex items-center gap-3" aria-label="Don Corte Fino">
           <Image src="/brand/mark.webp" alt="" width={44} height={44} className="h-9 w-9 md:h-11 md:w-11" priority />
           <span className="leading-none">
-            <span className="block font-display text-[0.6rem] tracking-[0.4em] text-wine">DON</span>
+            <span className="block font-display text-[0.7rem] font-semibold tracking-[0.45em] text-champagne md:text-xs">DON</span>
             <span className="block font-display text-base tracking-[0.12em] text-bone md:text-lg">CORTE FINO</span>
           </span>
         </Link>
