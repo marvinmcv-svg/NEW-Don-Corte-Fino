@@ -11,7 +11,8 @@ import { displayPhone } from "@/lib/order";
  * shop settings and FAQ.
  *
  * Model, in order of preference:
- * - NVIDIA_API_KEY: GLM on NVIDIA's OpenAI-compatible API (LOLA_MODEL / LOLA_BASE_URL override the defaults)
+ * - NVIDIA_API_KEY: NVIDIA's OpenAI-compatible API, Nemotron 3 Ultra by default (LOLA_MODEL / LOLA_BASE_URL
+ *   override it, e.g. LOLA_MODEL=z-ai/glm-5.3-flash; LOLA_THINKING=1 turns the model's reasoning on)
  * - ANTHROPIC_API_KEY: Claude
  * - neither: answers from the FAQ by keyword
  */
@@ -20,7 +21,9 @@ export const runtime = "nodejs";
 export const maxDuration = 60;
 
 const GLM_BASE = process.env.LOLA_BASE_URL ?? "https://integrate.api.nvidia.com/v1";
-const GLM_MODEL = process.env.LOLA_MODEL ?? "z-ai/glm-5.3-flash";
+const GLM_MODEL = process.env.LOLA_MODEL ?? "nvidia/nemotron-3-ultra-550b-a55b";
+/** Reasoning makes replies slower for little gain on short shop questions, so it is off unless asked for. */
+const GLM_THINKING = process.env.LOLA_THINKING === "1";
 /** If the model hasn't started answering by then, the visitor gets the FAQ answer instead of a spinner. */
 const FIRST_TOKEN_MS = 20_000;
 
@@ -61,7 +64,7 @@ function systemPrompt(c: Catalog) {
     .join("\n");
   const offers = c.offers
     .filter((o) => o.active)
-    .map((o) => `- ${o.name.es}: ${o.pitch.es}${o.code ? ` (código ${o.code})` : ""}${o.launch_price ? ` — ${bs(o.launch_price)}` : ""}`)
+    .map((o) => `- ${o.name.es}: ${o.pitch.es}${o.code ? ` (código ${o.code})` : ""}${o.launch_price ? ` — ${bs(o.launch_price)}` : ""}${o.type === "bundle" ? " (link: /es#cajas)" : ""}`)
     .join("\n");
   const faq = FAQ.map((f) => `P: ${f.q.es}\nR: ${f.a.es}`).join("\n\n");
 
@@ -76,7 +79,8 @@ Reglas:
 - Somos Wangus (Wagyu × Angus), NO Wagyu puro. Nunca digas que vendemos Wagyu puro.
 - Los precios son referenciales; el total final se confirma por WhatsApp tras pesar.
 - No tomes pedidos ni pagos en el chat: guía al cliente a la tienda (/es/tienda) y al botón de WhatsApp.
-- Sin markdown pesado: texto plano, puedes usar guiones para listas.
+- Usa SOLO los links que aparecen en estos datos, tal cual (cambia /es/ por /en/ si hablas en inglés). Nunca inventes una URL: las cajas y combos se ven en /es#cajas, la tienda completa en /es/tienda.
+- Sin markdown: texto plano, sin negritas ni asteriscos; puedes usar guiones para listas.
 
 DATOS DE LA TIENDA
 - Marca: Don Corte Fino · carne Wangus (Wagyu × Angus), terminada a corral en Santa Cruz camino a Brasil. Marmoleo BMS 4–7.
@@ -110,10 +114,11 @@ async function* glmStream(system: string, history: Turn[], signal: AbortSignal) 
     body: JSON.stringify({
       model: GLM_MODEL,
       messages: [{ role: "system", content: system }, ...history],
-      temperature: 0.5,
-      top_p: 1,
+      temperature: 0.6,
+      top_p: 0.95,
       max_tokens: 1024,
       stream: true,
+      chat_template_kwargs: { enable_thinking: GLM_THINKING },
     }),
   });
   if (!res.ok || !res.body) throw new Error(`GLM ${res.status} ${(await res.text().catch(() => "")).slice(0, 200)}`);
@@ -122,6 +127,13 @@ async function* glmStream(system: string, history: Turn[], signal: AbortSignal) 
   const decoder = new TextDecoder();
   let buf = "";
   let thinking = false;
+  let star = "";
+  const plain = (t: string) => {
+    t = star + t;
+    star = t.endsWith("*") && !t.endsWith("**") ? "*" : "";
+    if (star) t = t.slice(0, -1);
+    return t.replace(/\*\*/g, "");
+  };
   for (;;) {
     const { value, done } = await reader.read();
     if (done) break;
@@ -132,7 +144,10 @@ async function* glmStream(system: string, history: Turn[], signal: AbortSignal) 
       buf = buf.slice(nl + 1);
       if (!line.startsWith("data:")) continue;
       const data = line.slice(5).trim();
-      if (data === "[DONE]") return;
+      if (data === "[DONE]") {
+        if (star) yield star;
+        return;
+      }
       let piece: string | undefined;
       try {
         piece = JSON.parse(data).choices?.[0]?.delta?.content;
@@ -159,6 +174,7 @@ async function* glmStream(system: string, history: Turn[], signal: AbortSignal) 
           piece = piece.slice(start + 7);
         }
       }
+      out = plain(out);
       if (out) yield out;
     }
   }
@@ -213,7 +229,7 @@ export async function POST(req: Request) {
           }
           if (!wrote) controller.enqueue(encoder.encode(fallback()));
         } catch (e) {
-          console.error("[lola] glm", e instanceof Error ? e.message : e);
+          console.error("[lola] nvidia", e instanceof Error ? e.message : e);
           if (!wrote) controller.enqueue(encoder.encode(fallback()));
         } finally {
           clearTimeout(slow);
