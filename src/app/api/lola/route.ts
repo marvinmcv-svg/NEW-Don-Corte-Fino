@@ -8,10 +8,21 @@ import { displayPhone } from "@/lib/order";
 
 /**
  * Vaca Lola, the shop's AI receptionist. Streams plain-text replies grounded in the live catalogue,
- * shop settings and FAQ. Without ANTHROPIC_API_KEY it answers from the FAQ by keyword instead.
+ * shop settings and FAQ.
+ *
+ * Model, in order of preference:
+ * - NVIDIA_API_KEY: GLM on NVIDIA's OpenAI-compatible API (LOLA_MODEL / LOLA_BASE_URL override the defaults)
+ * - ANTHROPIC_API_KEY: Claude
+ * - neither: answers from the FAQ by keyword
  */
 
 export const runtime = "nodejs";
+export const maxDuration = 60;
+
+const GLM_BASE = process.env.LOLA_BASE_URL ?? "https://integrate.api.nvidia.com/v1";
+const GLM_MODEL = process.env.LOLA_MODEL ?? "z-ai/glm-5.3-flash";
+/** If the model hasn't started answering by then, the visitor gets the FAQ answer instead of a spinner. */
+const FIRST_TOKEN_MS = 20_000;
 
 const MAX_TURNS = 12;
 const MAX_CHARS = 1200;
@@ -85,6 +96,74 @@ PREGUNTAS FRECUENTES
 ${faq}`;
 }
 
+type Turn = { role: "user" | "assistant"; content: string };
+
+/**
+ * Streams the reply text from an OpenAI-compatible chat endpoint (server-sent events). Only the answer is
+ * passed on: reasoning deltas and any <think>…</think> block are dropped.
+ */
+async function* glmStream(system: string, history: Turn[], signal: AbortSignal) {
+  const res = await fetch(`${GLM_BASE}/chat/completions`, {
+    method: "POST",
+    signal,
+    headers: { authorization: `Bearer ${process.env.NVIDIA_API_KEY}`, "content-type": "application/json", accept: "text/event-stream" },
+    body: JSON.stringify({
+      model: GLM_MODEL,
+      messages: [{ role: "system", content: system }, ...history],
+      temperature: 0.5,
+      top_p: 1,
+      max_tokens: 1024,
+      stream: true,
+    }),
+  });
+  if (!res.ok || !res.body) throw new Error(`GLM ${res.status} ${(await res.text().catch(() => "")).slice(0, 200)}`);
+
+  const reader = res.body.getReader();
+  const decoder = new TextDecoder();
+  let buf = "";
+  let thinking = false;
+  for (;;) {
+    const { value, done } = await reader.read();
+    if (done) break;
+    buf += decoder.decode(value, { stream: true });
+    let nl: number;
+    while ((nl = buf.indexOf("\n")) >= 0) {
+      const line = buf.slice(0, nl).trim();
+      buf = buf.slice(nl + 1);
+      if (!line.startsWith("data:")) continue;
+      const data = line.slice(5).trim();
+      if (data === "[DONE]") return;
+      let piece: string | undefined;
+      try {
+        piece = JSON.parse(data).choices?.[0]?.delta?.content;
+      } catch {
+        continue;
+      }
+      if (!piece) continue;
+      // Some reasoning models inline their thinking; keep only what comes after it.
+      let out = "";
+      while (piece) {
+        if (thinking) {
+          const end = piece.indexOf("</think>");
+          if (end < 0) break;
+          thinking = false;
+          piece = piece.slice(end + 8);
+        } else {
+          const start = piece.indexOf("<think>");
+          if (start < 0) {
+            out += piece;
+            break;
+          }
+          out += piece.slice(0, start);
+          thinking = true;
+          piece = piece.slice(start + 7);
+        }
+      }
+      if (out) yield out;
+    }
+  }
+}
+
 const text = (body: string, mode: "ai" | "faq") =>
   new Response(body, { headers: { "content-type": "text/plain; charset=utf-8", "x-lola-mode": mode } });
 
@@ -114,10 +193,41 @@ export async function POST(req: Request) {
 
   if (limited(ip)) return text(locale === "es" ? `¡Muuu, cuántas preguntas! Dame un respiro y vuelve en unos minutos, o escríbenos al WhatsApp ${wa}.` : `Moo, that's a lot of questions! Give me a few minutes, or message us on WhatsApp at ${wa}.`, "faq");
 
-  if (!process.env.ANTHROPIC_API_KEY) {
+  const encoder = new TextEncoder();
+  const fallback = () => {
     const f = matchFaq(last.content as string);
-    return text(f ? f.a[locale] : handoff, "faq");
+    return f ? f.a[locale] : handoff;
+  };
+
+  if (process.env.NVIDIA_API_KEY) {
+    const abort = new AbortController();
+    const out = new ReadableStream<Uint8Array>({
+      async start(controller) {
+        let wrote = false;
+        const slow = setTimeout(() => !wrote && abort.abort(), FIRST_TOKEN_MS);
+        try {
+          for await (const piece of glmStream(systemPrompt(catalog), history as Turn[], abort.signal)) {
+            if (!wrote && !piece.trim()) continue; // no leading blank lines
+            controller.enqueue(encoder.encode(wrote ? piece : piece.trimStart()));
+            wrote = true;
+          }
+          if (!wrote) controller.enqueue(encoder.encode(fallback()));
+        } catch (e) {
+          console.error("[lola] glm", e instanceof Error ? e.message : e);
+          if (!wrote) controller.enqueue(encoder.encode(fallback()));
+        } finally {
+          clearTimeout(slow);
+          controller.close();
+        }
+      },
+      cancel() {
+        abort.abort();
+      },
+    });
+    return new Response(out, { headers: { "content-type": "text/plain; charset=utf-8", "x-lola-mode": "ai", "cache-control": "no-store" } });
   }
+
+  if (!process.env.ANTHROPIC_API_KEY) return text(fallback(), "faq");
 
   const client = new Anthropic();
   const stream = client.beta.messages.stream({
@@ -130,7 +240,6 @@ export async function POST(req: Request) {
     messages: history,
   });
 
-  const encoder = new TextEncoder();
   const out = new ReadableStream<Uint8Array>({
     async start(controller) {
       let wrote = false;
